@@ -17,7 +17,13 @@ endif
 OBJS_SRC = $(SRC)/align_wrt_beam_photon.o $(SRC)/boost_CS.o \
 	$(SRC)/BinData.o
 
+all: main RealData
+.PHONY : all
+
 main: main.C $(OBJS_SRC) $(SRC)/functions.h
+	$(CC) -o $@ $(OPTM) $@.C $(OBJS_SRC) $(INC_PATH) $(CFLAGS)
+
+RealData: RealData.C $(OBJS_SRC) $(SRC)/functions.h
 	$(CC) -o $@ $(OPTM) $@.C $(OBJS_SRC) $(INC_PATH) $(CFLAGS)
 
 #SRC files
@@ -30,6 +36,5 @@ $(SRC)/boost_CS.o: $(SRC)/boost_CS.cpp $(SRC)/functions.h
 $(SRC)/BinData.o: $(SRC)/BinData.cpp $(SRC)/functions.h
 	$(CC) -o $@ -c $< $(OPTM) -I $(SRC) $(CFLAGS) 
 
-
 clean:
-	$(RM) main $(OBJS) $(OBJS_SRC)
+	$(RM) main RealData $(OBJS) $(OBJS_SRC)

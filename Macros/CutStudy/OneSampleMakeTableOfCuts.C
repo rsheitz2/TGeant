@@ -2,7 +2,8 @@
 
 void OneSampleMakeTableOfCuts(TString phastFile="noFile",
 			      TString mainFile="noFile",
-			      TString outFile="OneSampleCuts"){
+			      TString outFile="OneSampleCuts",
+			      TString userEvent="UserEvent411"){
   //Used to determine cut impacts per period and put outputs in
   //OneSampleCuts.txt
   //Only need to change data locations to use for another data set
@@ -20,7 +21,11 @@ void OneSampleMakeTableOfCuts(TString phastFile="noFile",
     cout << " " << endl;
     cout << "Example usage without phastFile:";
     cout << "\'OneSampleMakeTableOfCuts.C(\"noFile\", \"mainFile.root\", ";
-    cout << "\"outputFile.txt\")\'" << endl;
+    cout << "\"outputFile.txt\",\"UserEvent411\")\'" << endl;
+    cout << " " << endl;
+    cout << "Typical UserEvents:" << endl;
+    cout << "UserEvent411 for Monte Carlo data" << endl;
+    cout << "UserEvent404 for real data" << endl;
     cout << " " << endl;
     exit();
   }
@@ -33,7 +38,8 @@ void OneSampleMakeTableOfCuts(TString phastFile="noFile",
   if (phastFile!="noFile") {
     hasPhast = true;
     fPhast = TFile::Open(phastFile);
-    hPhastCuts = (TH1D*)fPhast->Get("UserEvent410/DiMuonCuts");
+    userEvent+="/DiMuonCuts";
+    hPhastCuts = (TH1D*)fPhast->Get(userEvent);
 
     for (Int_t bi=1; bi<hPhastCuts->GetNbinsX()+1; bi++) {
       if (hPhastCuts->GetBinContent(bi) > 0){
