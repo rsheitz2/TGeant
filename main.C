@@ -10,12 +10,13 @@ int main(int argc, char **argv){
     cout << "To be used with Monte Carlo Data" << endl;
     cout << "" << endl;
     cout << "Usage:" << endl;
-    cout << "./main [options] [-f filename]" << endl;
+    cout << "./main [options] [-ffilename]" << endl;
     cout << "filename should be the full path name" << endl;
     cout << "" << endl;
     cout << "Option:  -u ##		(new UserEvent number, default==411)"
 	 << endl;
     cout << "Option:  -w		(write output to file)" << endl;
+    cout << "        default output file is named \"Output.root\"" << endl;
     cout << "Option:  -W outName	(write output to file to outName)"
 	 << endl;
     cout << "" << endl;
@@ -29,7 +30,7 @@ int main(int argc, char **argv){
   Int_t c;
   TString userNum = "", fname = "", outFile = "";
   
-  while ((c = getopt (argc, argv, "wu:f:W:")) != -1) {
+  while ((c = getopt (argc, argv, "wu:f:Q:")) != -1) {
     switch (c) {
     case 'u':
       uflag = 1;
@@ -38,13 +39,14 @@ int main(int argc, char **argv){
     case 'w':
       wflag = 1;
       break;
-    case 'W':
+    case 'Q':
       Wflag = 1;
       outFile += optarg;
       break;
     case 'f':
       fflag = 1;
       fname += optarg;
+      cout << fname << endl;
       break;
     case '?':
       if (optopt == 'u')
