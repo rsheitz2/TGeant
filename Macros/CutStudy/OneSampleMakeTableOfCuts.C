@@ -32,7 +32,8 @@ void OneSampleMakeTableOfCuts(TString phastFile="noFile",
 
   TFile *fPhast, *fMain;
   TH1D *hPhastCuts, *hMainCuts;
-  ofstream cuts("OneSampleCuts.txt");
+  //ofstream cuts("OneSampleCuts.txt");
+  ofstream cuts(outFile);
   
   Bool_t hasPhast=false;
   if (phastFile!="noFile") {

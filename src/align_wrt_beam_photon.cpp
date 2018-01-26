@@ -1,52 +1,6 @@
 #include "common.hxx"
 #include "functions.h"
 
-/*void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target, TLorentzVector& spin_upStream, TLorentzVector& spin_downStream, 
-  TLorentzVector& virtual_photon, TLorentzVector& lepton1, TLorentzVector& lepton2){//*/
-  /*void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target, TLorentzVector& spin_upStream, TLorentzVector& spin_downStream, 
-    TLorentzVector& virtual_photon, TLorentzVector& lepton1, TLorentzVector& lepton2, Double_t *phLab){//*/
-  //Beam angles of rotation
-  //std::cout << "yes" << std::endl;
-  /*Double_t beam_azimuthal = beam.Phi();
-  Double_t beam_polar = beam.Theta();
-  
-  //Rotate about azimuthal beam angle (only needed to ensure next rotation is about the Yaxis)
-  //Another approach would be to find angle perpendicular to z-axis and beam momentum 
-  //       and rotate by beam_polar about this angle
-  beam.RotateZ(-beam_azimuthal);
-  target.RotateZ(-beam_azimuthal);
-  spin_upStream.RotateZ(-beam_azimuthal);
-  spin_downStream.RotateZ(-beam_azimuthal);
-  virtual_photon.RotateZ(-beam_azimuthal);
-  lepton1.RotateZ(-beam_azimuthal);
-  lepton2.RotateZ(-beam_azimuthal);
-  //std::cout << beam.Phi() << std::endl;
-  //Rotate about polar angle
-  beam.RotateY(-beam_polar);
-  target.RotateY(-beam_polar);
-  spin_upStream.RotateY(-beam_polar);
-  spin_downStream.RotateY(-beam_polar);
-  virtual_photon.RotateY(-beam_polar);
-  lepton1.RotateY(-beam_polar);
-  lepton2.RotateY(-beam_polar);
-  //std::cout << beam.Phi() << " polar" << std::endl;
-  //Virtual photon azimuthal angle when z-axis is aligned with the beam
-  Double_t vPhoton_azimuthal = virtual_photon.Phi();
-
-  phLab = vPhoton_azimuthal;
-  //Rotate about azimuthal angle of virtual photon
-  beam.RotateZ(-vPhoton_azimuthal);
-  target.RotateZ(-vPhoton_azimuthal);
-  spin_upStream.RotateZ(-vPhoton_azimuthal);
-  spin_downStream.RotateZ(-vPhoton_azimuthal);
-  virtual_photon.RotateZ(-vPhoton_azimuthal);
-  lepton1.RotateZ(-vPhoton_azimuthal);
-  lepton2.RotateZ(-vPhoton_azimuthal);
-  //std::cout << vPhoton_azimuthal << " vPhoton_azimuthal " << spin_upStream.Phi() << " ";
-  //std::cout << TMath::Pi()/2.0 - spin_upStream.Phi() << " " << vPhoton_azimuthal << " ";
-  //std::cout << beam.Phi() << " azimuthal" << std::endl;
-}//align_wrt_beam_photon//*/
-
 void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target, TLorentzVector& spin1, TLorentzVector& spin2, 
 			   TLorentzVector& virtual_photon, TLorentzVector& lepton1, TLorentzVector& lepton2){
   //spin1 is upstream target or true target spin

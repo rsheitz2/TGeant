@@ -1,5 +1,6 @@
 #include "common.hxx"
 #include "functions.h"
+#include "setup.h"
 #include <bitset>
 
 using namespace std;
@@ -13,11 +14,11 @@ int main(int argc, char **argv){
     cout << "./main [options] [-ffilename]" << endl;
     cout << "filename should be the full path name" << endl;
     cout << "" << endl;
-    cout << "Option:  -u ##		(new UserEvent number, default==411)"
+    cout << "Option:  -u ##		(new UserEvent number, default==415)"
 	 << endl;
     cout << "Option:  -w		(write output to file)" << endl;
     cout << "        default output file is named \"Output.root\"" << endl;
-    cout << "Option:  -W outName	(write output to file to outName)"
+    cout << "Option:  -Q outName	(write output to file to outName)"
 	 << endl;
     cout << "" << endl;
 	
@@ -26,7 +27,7 @@ int main(int argc, char **argv){
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
-  Int_t uflag=0, wflag=0, Wflag=0, fflag=0;
+  Int_t uflag=0, wflag=0, Qflag=0, fflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "";
   
@@ -40,7 +41,7 @@ int main(int argc, char **argv){
       wflag = 1;
       break;
     case 'Q':
-      Wflag = 1;
+      Qflag = 1;
       outFile += optarg;
       break;
     case 'f':
@@ -68,8 +69,8 @@ int main(int argc, char **argv){
   //Get tree from file
   TString userEvent = "UserEvent";
   if (!uflag) {
-    userEvent += "411/Particles";
-    cout << "Default UserEvent11 used" << endl;
+    userEvent += "415/Particles";
+    cout << "Default UserEvent415 used" << endl;
   }
   else userEvent += userNum + "/Particles";
   TChain* T1 = new TChain(userEvent);
@@ -88,100 +89,108 @@ int main(int argc, char **argv){
   }
   T1->Add(fname);
   
-    //Internal variables and binning
-    Double_t M_proton = 0.938272;
+  //Internal variables and binning
+  Double_t M_proton = 0.938272;
 
-    //Binnings
-    Double_t xN_bounds[] = {0.00, 0.13, 0.19, 1.00};
-    Double_t xPi_bounds[] = {0.00, 0.40, 0.56, 1.00};
-    Double_t xF_bounds[] = {-1.0, 0.21, 0.41, 1.00};
-    Double_t M_bounds[] = {4.30, 4.75, 5.50, 8.50};
+  //Binnings
+  Double_t xN_bounds[] = {0.00, 0.13, 0.19, 1.00};
+  Double_t xPi_bounds[] = {0.00, 0.40, 0.56, 1.00};
+  Double_t xF_bounds[] = {-1.0, 0.21, 0.41, 1.00};
+  Double_t M_bounds[] = {4.30, 4.75, 5.50, 8.50};
   
-    TVectorD tv_xN_bounds; tv_xN_bounds.Use(4, xN_bounds);
-    TVectorD tv_xPi_bounds; tv_xPi_bounds.Use(4, xPi_bounds);
-    TVectorD tv_xF_bounds; tv_xF_bounds.Use(4, xF_bounds);
-    TVectorD tv_M_bounds; tv_M_bounds.Use(4, M_bounds);
+  TVectorD tv_xN_bounds; tv_xN_bounds.Use(4, xN_bounds);
+  TVectorD tv_xPi_bounds; tv_xPi_bounds.Use(4, xPi_bounds);
+  TVectorD tv_xF_bounds; tv_xF_bounds.Use(4, xF_bounds);
+  TVectorD tv_M_bounds; tv_M_bounds.Use(4, M_bounds);
   
-    //////UserEvent Information
-    /////////////////
-    //Positively charged outgoing muon
-    Int_t isBeam_p1, numVx_p1, numOutVx_p1, numVxpri_p1;
-    //Positively charged outgoing muon trajectory parameters at vertex
-    Double_t phi_traj1, theta_traj1;
-    Double_t qP_traj1;
-    Double_t vP1_X, vP1_Y, vP1_Z, vP1_E;
-    //Negatively charged outgoing muon
-    Int_t isBeam_p2, numVx_p2, numOutVx_p2, numVxpri_p2;
-    //Negatively charged outgoing muon trajectory parameters at vertex
-    Double_t phi_traj2, theta_traj2;
-    Double_t qP_traj2;
-    Double_t vP2_X, vP2_Y, vP2_Z, vP2_E;
-    //Vertex specific
-    Double_t vx_z, vx_y, vx_x; 
-    Double_t vx_xVar, vx_yVar, vx_zVar;
-    Double_t vx_Chi, vx_Chi_ndf;
-    Int_t vx_ndf, vx_NOutParticles, vx_IsPrimary, vx_IsBestPrimary;
-    //Positively charged outgoing muon track parameters
-    Double_t Zfirst_tr1, Zlast_tr1;//Zmax_tr1, Zmin_tr1 same as first/last
-    Int_t NHits_tr1;
-    Double_t Chi2tot_tr1, Chi2tot_Ndf_tr1;
-    Int_t Ndf_tr1;
-    Double_t meanT_tr1, sigT_tr1;
-    Double_t XX0_tr1;
-    //Negatively charged outgoing muon track parameters
-    Double_t Zfirst_tr2, Zlast_tr2;//Zmax_tr2, Zmin_tr2 same as first/last
-    Int_t NHits_tr2;
-    Double_t Chi2tot_tr2, Chi2tot_Ndf_tr2;
-    Int_t Ndf_tr2;
-    Double_t meanT_tr2, sigT_tr2;
-    Double_t XX0_tr2;
-    //Virtual photon specific/Dimuon
-    Double_t vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E;
-    Double_t vDiMuon_invM;
-    Double_t vOpenAngle;
+  //////UserEvent Information
+  /////////////////
+  //Positively charged outgoing muon
+  Int_t isBeam_p1, numVx_p1, numOutVx_p1, numVxpri_p1;
+  //Positively charged outgoing muon trajectory parameters at vertex
+  Double_t phi_traj1, theta_traj1;
+  Double_t qP_traj1;
+  Double_t vP1_X, vP1_Y, vP1_Z, vP1_E;
+  //Negatively charged outgoing muon
+  Int_t isBeam_p2, numVx_p2, numOutVx_p2, numVxpri_p2;
+  //Negatively charged outgoing muon trajectory parameters at vertex
+  Double_t phi_traj2, theta_traj2;
+  Double_t qP_traj2;
+  Double_t vP2_X, vP2_Y, vP2_Z, vP2_E;
+  //Vertex specific
+  Double_t vx_z, vx_y, vx_x; 
+  Double_t vx_xVar, vx_yVar, vx_zVar;
+  Double_t vx_Chi, vx_Chi_ndf;
+  Int_t vx_ndf, vx_NOutParticles, vx_IsPrimary, vx_IsBestPrimary;
+  //Positively charged outgoing muon track parameters
+  Double_t Zfirst_tr1, Zlast_tr1;//Zmax_tr1, Zmin_tr1 same as first/last
+  Int_t NHits_tr1;
+  Double_t Chi2tot_tr1, Chi2tot_Ndf_tr1;
+  Int_t Ndf_tr1;
+  Double_t meanT_tr1, sigT_tr1;
+  Double_t XX0_tr1;
+  //Negatively charged outgoing muon track parameters
+  Double_t Zfirst_tr2, Zlast_tr2;//Zmax_tr2, Zmin_tr2 same as first/last
+  Int_t NHits_tr2;
+  Double_t Chi2tot_tr2, Chi2tot_Ndf_tr2;
+  Int_t Ndf_tr2;
+  Double_t meanT_tr2, sigT_tr2;
+  Double_t XX0_tr2;
+  //Virtual photon specific/Dimuon
+  Double_t vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E;
+  Double_t vDiMuon_invM;
+  Double_t vOpenAngle;
 
-    ////Beam particle specific
-    //Beam pion particle specific
-    Int_t isBeam_pIn, numVx_pIn, numOutVx_pIn;
-    //Beam pion trajectory parameters at vertex
-    Double_t phi_trajPIn, theta_trajPIn;
-    Double_t qP_trajPIn;
-    Double_t beam_X, beam_Y, beam_Z, beam_E;
-    //Beam pion track specific
-    Double_t Zlast_trPIn;//first/last are the same for beam particles
-    //(first is closest det to target)
-    Int_t NHits_trPIn;
-    Double_t Chi2tot_trPIn, Chi2tot_Ndf_trPIn;
-    Int_t Ndf_trPIn;
-    Double_t meanT_trPIn, sigT_trPIn;
-    Double_t XX0_trPIn;
+  ////Beam particle specific
+  //Beam pion particle specific
+  Int_t isBeam_pIn, numVx_pIn, numOutVx_pIn;
+  //Beam pion trajectory parameters at vertex
+  Double_t phi_trajPIn, theta_trajPIn;
+  Double_t qP_trajPIn;
+  Double_t beam_X, beam_Y, beam_Z, beam_E;
+  //Beam pion track specific
+  Double_t Zlast_trPIn;//first/last are the same for beam particles
+  //(first is closest det to target)
+  Int_t NHits_trPIn;
+  Double_t Chi2tot_trPIn, Chi2tot_Ndf_trPIn;
+  Int_t Ndf_trPIn;
+  Double_t meanT_trPIn, sigT_trPIn;
+  Double_t XX0_trPIn;
 
-    //Event specific
-    Int_t NParticle, NTrack, NVertex; 
-    Int_t trigMask;
-    Long64_t event;
-    //DY-variables
-    Double_t x_beam, x_target, x_feynman, q_transverse;
+  //Event specific
+  Int_t NParticle, NTrack, NVertex; 
+  Int_t trigMask;
+  Long64_t event;
+  //DY-variables
+  Double_t x_beam, x_target, x_feynman, q_transverse;
 
-    //Monte Carlo specific
-    //MC Positively charged outgoing muon track parameters
-    Int_t pid_MCtr1, NMCHits_tr1;
-    Double_t Pinv_MCtr1, theta_MCtr1, phi_MCtr1;
-    Double_t vMCtr1_X, vMCtr1_Y, vMCtr1_Z, vMCtr1_E;
-    //MC Negatively charged outgoing muon track parameters
-    Int_t pid_MCtr2, NMCHits_tr2;
-    Double_t Pinv_MCtr2, theta_MCtr2, phi_MCtr2;
-    Double_t vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E;
-    //MC Beam muon track parameters
-    Int_t pid_MCtrIn, NMCHits_trIn, IsBeam_MCtrIn;
-    Double_t Pinv_MCtrIn, theta_MCtrIn, phi_MCtrIn;
-    Double_t vMCtrIn_X, vMCtrIn_Y, vMCtrIn_Z, vMCtrIn_E;
-    //MC DY-variables
-    Double_t MC_x_beam, MC_x_target, MC_x_feynman, MC_q_transverse;
+  //Monte Carlo specific
+  //MC Positively charged outgoing muon track parameters
+  Int_t pid_MCtr1, NMCHits_tr1;
+  Double_t Pinv_MCtr1, theta_MCtr1, phi_MCtr1;
+  Double_t vMCtr1_X, vMCtr1_Y, vMCtr1_Z, vMCtr1_E;
+  //MC Negatively charged outgoing muon track parameters
+  Int_t pid_MCtr2, NMCHits_tr2;
+  Double_t Pinv_MCtr2, theta_MCtr2, phi_MCtr2;
+  Double_t vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E;
+  //MC Beam muon track parameters
+  Int_t pid_MCtrIn, NMCHits_trIn, IsBeam_MCtrIn;
+  Double_t Pinv_MCtrIn, theta_MCtrIn, phi_MCtrIn;
+  Double_t vMCtrIn_X, vMCtrIn_Y, vMCtrIn_Z, vMCtrIn_E;
+  //MC DY-variables
+  Double_t MC_x_beam, MC_x_target, MC_x_feynman, MC_q_transverse;
+  //Positions
+  Double_t SM1_p1x, SM1_p1y, SM1_p2x, SM1_p2y;
+  Double_t SM2_p1x, SM2_p1y, SM2_p2x, SM2_p2y;
+  Double_t HG01_p1x, HG01_p1y, HG02_y1_p1x, HG02_y1_p1y;
+  Double_t HG02_y2_p1x, HG02_y2_p1y;
+  Double_t HG01_p2x, HG01_p2y, HG02_y1_p2x, HG02_y1_p2y;
+  Double_t HG02_y2_p2x, HG02_y2_p2y;
+    
 
-    //Positively charged outgoing muon
-    T1->SetBranchAddress("isBeam_p1", &isBeam_p1);
-    T1->SetBranchAddress("numVx_p1", &numVx_p1);
+  //Positively charged outgoing muon
+  T1->SetBranchAddress("isBeam_p1", &isBeam_p1);
+  T1->SetBranchAddress("numVx_p1", &numVx_p1);
   T1->SetBranchAddress("numOutVx_p1", &numOutVx_p1);
   T1->SetBranchAddress("numVxpri_p1", &numVxpri_p1);
   //Positively charnged outgoing muon trajectory parameters at vertex
@@ -318,13 +327,63 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("MC_x_target", &MC_x_target);
   T1->SetBranchAddress("MC_x_feynman", &MC_x_feynman);
   T1->SetBranchAddress("MC_q_transverse", &MC_q_transverse);
+  //Positions
+  T1->SetBranchAddress("SM1_p1x", &SM1_p1x);
+  T1->SetBranchAddress("SM1_p1y", &SM1_p1y);
+  T1->SetBranchAddress("SM1_p2x", &SM1_p2x);
+  T1->SetBranchAddress("SM1_p2y", &SM1_p2y);
+  T1->SetBranchAddress("SM2_p1x", &SM2_p1x);
+  T1->SetBranchAddress("SM2_p1y", &SM2_p1y);
+  T1->SetBranchAddress("SM2_p2x", &SM2_p2x);
+  T1->SetBranchAddress("SM2_p2y", &SM2_p2y);
+  T1->SetBranchAddress("HG01_p1x", &HG01_p1x);
+  T1->SetBranchAddress("HG01_p1y", &HG01_p1y);
+  T1->SetBranchAddress("HG01_p2x", &HG01_p2x);
+  T1->SetBranchAddress("HG01_p2y", &HG01_p2y);
+  T1->SetBranchAddress("HG02_y1_p1x", &HG02_y1_p1x);
+  T1->SetBranchAddress("HG02_y1_p1y", &HG02_y1_p1y);
+  T1->SetBranchAddress("HG02_y1_p2x", &HG02_y1_p2x);
+  T1->SetBranchAddress("HG02_y1_p2y", &HG02_y1_p2y);
+  T1->SetBranchAddress("HG02_y2_p1x", &HG02_y2_p1x);
+  T1->SetBranchAddress("HG02_y2_p1y", &HG02_y2_p1y);
+  T1->SetBranchAddress("HG02_y2_p2x", &HG02_y2_p2x);
+  T1->SetBranchAddress("HG02_y2_p2y", &HG02_y2_p2y);
+
   
+  //Cut histograms
+  const Int_t nCutHist = 11;//Number of impact cut hist
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
 
+  TH1D *hCut_VxZ[nMCCuts];
+  TH1D *hCut_MuPTheta[nMCCuts],*hCut_MuPPhi[nMCCuts],*hCut_MuPqP[nMCCuts];
+  TH1D *hCut_MuMTheta[nMCCuts],*hCut_MuMPhi[nMCCuts],*hCut_MuMqP[nMCCuts];
+  TH1D *hCut_xN[nMCCuts], *hCut_xPi[nMCCuts], *hCut_xF[nMCCuts];
+  TH1D *hCut_qT[nMCCuts];
+
+  TH1D *hImpactCuts[nCutHist][nMCCuts];
+
+  Int_t ih = 0;
+  HistArraySetupMC(hCut_VxZ, hImpactCuts, 500, -500, 100, ih, "VxZ"); ih++;
+  HistArraySetupMC(hCut_MuPTheta, hImpactCuts, 100, 0, 0.3, ih, "MuPTheta");
+  ih++;
+  HistArraySetupMC(hCut_MuPPhi, hImpactCuts, 100, -TMath::Pi(), TMath::Pi(),
+		   ih, "MuPPhi"); ih++;
+  HistArraySetupMC(hCut_MuPqP, hImpactCuts, 200, 0, 200, ih, "MuPqP"); ih++;
+  HistArraySetupMC(hCut_MuMTheta, hImpactCuts, 100, 0, 0.3, ih, "MuMTheta");
+  ih++;
+  HistArraySetupMC(hCut_MuMPhi, hImpactCuts, 100, -TMath::Pi(), TMath::Pi(),
+		   ih, "MuMPhi"); ih++;
+  HistArraySetupMC(hCut_MuMqP, hImpactCuts, 200, -200, 0, ih, "MuMqP"); ih++;
+  HistArraySetupMC(hCut_xN, hImpactCuts, 100, 0, 1, ih, "xN"); ih++;
+  HistArraySetupMC(hCut_xPi, hImpactCuts, 100, 0, 1, ih, "xPi"); ih++;
+  HistArraySetupMC(hCut_xF, hImpactCuts, 200, -1, 1, ih, "xF"); ih++;
+  HistArraySetupMC(hCut_qT, hImpactCuts, 200, 0, 5, ih, "qT"); ih++;
+
+  
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
   Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS;
-  Double_t Gen_PhiS, Gen_PhiS_simple;//, Gen_Phi_CS, Theta_CS;
+  Double_t Gen_PhiS, Gen_PhiS_simple, Gen_Phi_CS, Gen_Theta_CS;
   Int_t targetPosition;
   Double_t Spin;
   tree->Branch("PhiS", &PhiS, "PhiS/D");
@@ -333,6 +392,8 @@ int main(int argc, char **argv){
   tree->Branch("Theta_CS", &Theta_CS, "Theta_CS/D");
   tree->Branch("Gen_PhiS", &Gen_PhiS, "Gen_PhiS/D");
   tree->Branch("Gen_PhiS_simple", &Gen_PhiS_simple, "Gen_PhiS_simple/D");
+  tree->Branch("Gen_Phi_CS", &Gen_Phi_CS, "Gen_Phi_CS/D");
+  tree->Branch("Gen_Theta_CS", &Gen_Theta_CS, "Gen_Theta_CS/D");
   tree->Branch("x_beam", &x_beam, "x_beam/D");
   tree->Branch("x_target", &x_target, "x_target/D");
   tree->Branch("x_feynman", &x_feynman, "x_feynman/D");
@@ -364,6 +425,26 @@ int main(int argc, char **argv){
   tree->Branch("MC_x_target", &MC_x_target, "MC_x_target/D");
   tree->Branch("MC_x_feynman", &MC_x_feynman, "MC_x_feynman/D");
   tree->Branch("MC_q_transverse", &MC_q_transverse, "MC_q_transverse/D");
+  tree->Branch("SM1_p1x", &SM1_p1x, "SM1_p1x/D");
+  tree->Branch("SM1_p1y", &SM1_p1y, "SM1_p1y/D");
+  tree->Branch("SM1_p2x", &SM1_p2x, "SM1_p2x/D");
+  tree->Branch("SM1_p2y", &SM1_p2y, "SM1_p2y/D");
+  tree->Branch("SM2_p1x", &SM2_p1x, "SM2_p1x/D");
+  tree->Branch("SM2_p1y", &SM2_p1y, "SM2_p1y/D");
+  tree->Branch("SM2_p2x", &SM2_p2x, "SM2_p2x/D");
+  tree->Branch("SM2_p2y", &SM2_p2y, "SM2_p2y/D");
+  tree->Branch("HG01_p1x", &HG01_p1x, "HG01_p1x/D");
+  tree->Branch("HG01_p1y", &HG01_p1y, "HG01_p1y/D");
+  tree->Branch("HG01_p2x", &HG01_p2x, "HG01_p2x/D");
+  tree->Branch("HG01_p2y", &HG01_p2y, "HG01_p2y/D");
+  tree->Branch("HG02_y1_p1x", &HG02_y1_p1x, "HG02_y1_p1x/D");
+  tree->Branch("HG02_y1_p1y", &HG02_y1_p1y, "HG02_y1_p1y/D");
+  tree->Branch("HG02_y1_p2x", &HG02_y1_p2x, "HG02_y1_p2x/D");
+  tree->Branch("HG02_y1_p2y", &HG02_y1_p2y, "HG02_y1_p2y/D");
+  tree->Branch("HG02_y2_p1x", &HG02_y2_p1x, "HG02_y2_p1x/D");
+  tree->Branch("HG02_y2_p1y", &HG02_y2_p1y, "HG02_y2_p1y/D");
+  tree->Branch("HG02_y2_p2x", &HG02_y2_p2x, "HG02_y2_p2x/D");
+  tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");  
 
   Int_t tree_entries = T1->GetEntries();
   //Int_t tree_entries = 1000;//Debug
@@ -376,6 +457,14 @@ int main(int argc, char **argv){
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
 
+    Double_t cut_variables[nCutHist] = {vx_z, theta_traj1,
+					phi_traj1, qP_traj1, theta_traj2,
+					phi_traj2,
+					qP_traj2, x_beam, x_target,
+					x_feynman, q_transverse};
+    Int_t icut = 0;
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+
     TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
     TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
     TLorentzVector lv_diMu = lv_p1_Mu + lv_p2_Mu;
@@ -385,17 +474,21 @@ int main(int argc, char **argv){
     if (x_target < 0.0 || x_target > 1.0) continue;
     if (x_feynman < -1.0 || x_feynman > 1.0) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if (q_transverse < 0.4 || q_transverse > 5.0) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//qT cuts
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if ( (vx_z < -294.5 || vx_z > -239.3) && (vx_z < -219.5 || vx_z > -164.3)
 	 ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target z-cut
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if(TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >= TMath::Power(1.9, 2)
        ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target radial cut
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
         
     ////All data after cuts
     //////////////
@@ -486,6 +579,17 @@ int main(int argc, char **argv){
     boost_CS(lv_beam_CS, lv_target_CS, lv_Spin_CS, lv_Spin_simple_CS,
 	     lv_virtualPhoton_CS, lv_muPlus_CS, lv_muMinus_CS);
 
+    TLorentzVector lv_Gen_beam_CS(lv_Gen_beam_TF);
+    TLorentzVector lv_Gen_target_CS(lv_Gen_target_TF);
+    TLorentzVector lv_Gen_Spin_CS(lv_Gen_Spin_TF);
+    TLorentzVector lv_Gen_Spin_simple_CS(lv_Gen_Spin_simple_TF);
+    TLorentzVector lv_Gen_muMinus_CS(lv_Gen_muMinus_TF);
+    TLorentzVector lv_Gen_muPlus_CS(lv_Gen_muPlus_TF);
+    TLorentzVector lv_Gen_virtualPhoton_CS(lv_Gen_virtualPhoton_TF);
+    boost_CS(lv_Gen_beam_CS, lv_Gen_target_CS, lv_Gen_Spin_CS,
+	     lv_Gen_Spin_simple_CS, lv_Gen_virtualPhoton_CS, lv_Gen_muPlus_CS,
+	     lv_Gen_muMinus_CS);
+
     Double_t PhiS_lab = lv_Spin.Phi() - lv_virtualPhoton.Phi();
     if(PhiS_lab > TMath::Pi()) PhiS_lab = -2*TMath::Pi() + PhiS_lab;
     else if (PhiS_lab < -1.0*TMath::Pi() ) PhiS_lab = 2*TMath::Pi() + PhiS_lab;
@@ -496,8 +600,8 @@ int main(int argc, char **argv){
 
     Gen_PhiS = lv_Gen_Spin_TF.Phi();
     Gen_PhiS_simple = lv_Gen_Spin_simple_TF.Phi();
-    //Gen_Phi_CS = lv_muMinus_CS.Phi();
-    //Gen_Theta_CS = lv_muMinus_CS.Theta();
+    Gen_Phi_CS = lv_muMinus_CS.Phi();
+    Gen_Theta_CS = lv_muMinus_CS.Theta();
 
     tree->Fill();
   }//tree entries    
@@ -507,16 +611,15 @@ int main(int argc, char **argv){
   cout << "!!!!!!!!!!!!!!!" << endl;
 
   //Cuts histogram
-  const Int_t nCuts = 5;
-  TString cutNames[nCuts] = {"All Data", "xPion,xN,xF", "0.4<qT<5",
-			     "Target z-cut", "Target radius"};
-  for (Int_t i=0, j=1; i<nCuts; i++, j+=cut_space){
+  TString cutNames[nMCCuts] = {"AllData", "xPion,xN,xF", "0.4<qT<5",
+			       "TargetZ-cut", "TargetRadius"};
+  for (Int_t i=0, j=1; i<nMCCuts; i++, j+=cut_space){
     Int_t bin_index = hCuts->GetXaxis()->FindBin(j);
     hCuts->GetXaxis()->SetBinLabel(bin_index, cutNames[i]);
   }
 
-  if (!wflag && !Wflag) cout << "No file output" << endl;
-  else if (!Wflag){
+  if (!wflag && !Qflag) cout << "No file output" << endl;
+  else if (!Qflag){
     outFile += "Output.root";
     TFile *myFile = new TFile(outFile, "RECREATE");
     hCuts->Write();
@@ -526,6 +629,45 @@ int main(int argc, char **argv){
     tv_xPi_bounds.Write("tv_xPi_bounds");
     tv_xF_bounds.Write("tv_xF_bounds");
     tv_M_bounds.Write("tv_M_bounds");
+
+    TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
+    TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
+    TDirectory *MuPPhi_CutImpact = myFile->mkdir("MuPPhi_CutImpact");
+    TDirectory *MuPqP_CutImpact = myFile->mkdir("MuPqP_CutImpact");
+    TDirectory *MuMTheta_CutImpact = myFile->mkdir("MuMTheta_CutImpact");
+    TDirectory *MuMPhi_CutImpact = myFile->mkdir("MuMPhi_CutImpact");
+    TDirectory *MuMqP_CutImpact = myFile->mkdir("MuMqP_CutImpact");
+    TDirectory *xN_CutImpact = myFile->mkdir("xN_CutImpact");
+    TDirectory *xPi_CutImpact = myFile->mkdir("xPi_CutImpact");
+    TDirectory *xF_CutImpact = myFile->mkdir("xF_CutImpact");
+    TDirectory *qT_CutImpact = myFile->mkdir("qT_CutImpact");
+    for (Int_t i=0; i<nMCCuts; i++) {
+      VxZ_CutImpact->cd();
+      hCut_VxZ[i]->Write(cutNames[i]);
+
+      MuPTheta_CutImpact->cd();
+      hCut_MuPTheta[i]->Write(cutNames[i]);
+      MuPPhi_CutImpact->cd();
+      hCut_MuPPhi[i]->Write(cutNames[i]);
+      MuPqP_CutImpact->cd();
+      hCut_MuPqP[i]->Write(cutNames[i]);
+
+      MuMTheta_CutImpact->cd();
+      hCut_MuMTheta[i]->Write(cutNames[i]);
+      MuMPhi_CutImpact->cd();
+      hCut_MuMPhi[i]->Write(cutNames[i]);
+      MuMqP_CutImpact->cd();
+      hCut_MuMqP[i]->Write(cutNames[i]);
+
+      xN_CutImpact->cd();
+      hCut_xN[i]->Write(cutNames[i]);
+      xPi_CutImpact->cd();
+      hCut_xPi[i]->Write(cutNames[i]);
+      xF_CutImpact->cd();
+      hCut_xF[i]->Write(cutNames[i]);
+      qT_CutImpact->cd();
+      hCut_qT[i]->Write(cutNames[i]);
+    }
 
     cout << myFile->GetName() << " was written" << endl;
     myFile->Close();

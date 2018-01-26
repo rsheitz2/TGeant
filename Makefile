@@ -4,7 +4,6 @@ CFLAGS=`root-config --cflags --libs` -Wall
 INC_PATH=-Isrc 
 
 SRC = src
-KIN = Kinematics
 
 #Debug with OPT=-g
 #Reduce compilation time and be able to debug with OPT=-O0
@@ -15,15 +14,16 @@ else
 endif
 
 OBJS_SRC = $(SRC)/align_wrt_beam_photon.o $(SRC)/boost_CS.o \
-	$(SRC)/BinData.o
+	$(SRC)/BinData.o $(SRC)/setup.o
+HEADER = $(SRC)/common.hxx $(SRC)/setup.h $(SRC)/function.h
 
 all: main RealData
 .PHONY : all
 
-main: main.C $(OBJS_SRC) $(SRC)/functions.h
+main: main.C $(OBJS_SRC) 
 	$(CC) -o $@ $(OPTM) $@.C $(OBJS_SRC) $(INC_PATH) $(CFLAGS)
 
-RealData: RealData.C $(OBJS_SRC) $(SRC)/functions.h
+RealData: RealData.C $(OBJS_SRC) 
 	$(CC) -o $@ $(OPTM) $@.C $(OBJS_SRC) $(INC_PATH) $(CFLAGS)
 
 #SRC files
@@ -34,7 +34,10 @@ $(SRC)/boost_CS.o: $(SRC)/boost_CS.cpp $(SRC)/functions.h
 	$(CC) -o $@ -c $< $(OPTM) -I $(SRC) $(CFLAGS) 
 
 $(SRC)/BinData.o: $(SRC)/BinData.cpp $(SRC)/functions.h
-	$(CC) -o $@ -c $< $(OPTM) -I $(SRC) $(CFLAGS) 
+	$(CC) -o $@ -c $< $(OPTM) -I $(SRC) $(CFLAGS)
+
+$(SRC)/setup.o: $(SRC)/setup.cpp $(SRC)/setup.h
+	$(CC) -o $@ -c $< $(OPTM) -I $(SRC) $(CFLAGS)
 
 clean:
-	$(RM) main RealData $(OBJS) $(OBJS_SRC)
+	$(RM) main RealData $(OBJS_SRC)

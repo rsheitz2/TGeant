@@ -1,143 +1,130 @@
 #include "common.hxx"
 #include "functions.h"
+#include "setup.h"
 #include <bitset>
 
 using namespace std;
 
 int main(int argc, char **argv){
-  if(argc < 2){
+    if(argc < 2){
     cout << "" << endl;
-    cout << "To be used with UserEvent404 for real Data" << endl;
+    cout << "To be used with Real Data" << endl;
     cout << "" << endl;
     cout << "Usage:" << endl;
-    cout << "Enter data period i.e." << endl;
-    cout << "./RealData W07" << endl;
+    cout << "./main [options] [-Pperiod] [-ffilename]" << endl;
+    cout << "filename should be the full path name" << endl;
     cout << "" << endl;
-    cout << "Enter an additional argument to write output file i.e." << endl;
-    cout << "./RealData W07 1" << endl;
-    cout << "output file is named \"RealDataW##.root\"" << endl;
+    cout << "Option:  -P period         (which period to take bad spills from)"
+	 << endl;
+    cout << "(i.e W07, W08...  Can also enter \"WAll\" for all periods)";
+    cout << "" << endl;
+    cout << "Option:  -u ##		(new UserEvent number, default==420)"
+	 << endl;
+    cout << "Option:  -w		(write output to file)" << endl;
+    cout << "        default output file is named \"Output.root\"" << endl;
+    cout << "Option:  -Q outName	(write output to file to outName)"
+	 << endl;
     cout << "" << endl;
 	
     exit(EXIT_FAILURE);
   }
   cout << "" << endl;
-  TApplication theApp("tapp", &argc, argv); 
-    
-  TChain* T1 = new TChain("UserEvent404/Particles");
+  TApplication theApp("tapp", &argc, argv);
+
+  //Read input arguments
+  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, Pflag=0;
+  Int_t c;
+  TString userNum = "", fname = "", outFile = "", period = "";
+  
+  while ((c = getopt (argc, argv, "wu:f:Q:P:")) != -1) {
+    switch (c) {
+    case 'u':
+      uflag = 1;
+      userNum += optarg;
+      break;
+    case 'w':
+      wflag = 1;
+      break;
+    case 'Q':
+      Qflag = 1;
+      outFile += optarg;
+      break;
+    case 'f':
+      fflag = 1;
+      fname += optarg;
+      break;
+    case 'P':
+      Pflag = 1;
+      period += optarg;
+      break;
+    case '?':
+      if (optopt == 'u')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'f')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'P')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'Q')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (isprint (optopt))
+	fprintf (stderr, "Unknown option `-%c'.\n", optopt);
+      else
+	fprintf (stderr,
+		 "Unknown option character `\\x%x'.\n",
+		 optopt);
+      return 1;
+    default:
+      abort ();
+    }
+  }
+
+  if(wflag && Qflag){
+    cout << "Please only enter -w or -Qoutfile.  Not both" << endl;
+    exit(EXIT_FAILURE);
+  }
+
+  TString userEvent = "UserEvent";
+  if (!uflag) {
+    userEvent += "420/Particles";
+    cout << "Default UserEvent420 used" << endl;
+  }
+  else userEvent += userNum + "/Particles";
+  TChain* T1 = new TChain(userEvent);
+  
   TString BadSpillPath = "src/BadSpills/t3/";//Get badspill information
   map <Long64_t, vector<Long64_t> > BadMap;
   Long64_t BadRun, BadSpill;
-  
-  TString period(argv[1]);
-  if (period == "W07"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W07/\
-Merged.root");
-    
-    BadSpillPath += "/W07";
+  if (!Pflag){
+    cout << "Please enter a period for bad spills list" << endl;
+    exit(EXIT_FAILURE);
+  }
+  else{
+    BadSpillPath += period;
     ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
     while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W07" << endl;
-  }
-  else if (period == "W08"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W08/\
-Merged.root");
-    
-    BadSpillPath += "/W08";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W08" << endl;
-  }
-  else if (period == "W09"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W09/\
-Merged.root");
-    
-    BadSpillPath += "/W09";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W09" << endl;
-  }
-  else if (period == "W10"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/dy2015_t3/W10/\
-Merged.root");
-    
-    BadSpillPath += "/W10";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W10" << endl;
-  }
-  else if (period == "W11"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W11/\
-Merged.root");
-    
-    BadSpillPath += "/W11";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W11" << endl;
-  }
-  else if (period == "W12"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W12/\
-Merged.root");
-    
-    BadSpillPath += "/W12";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W12" << endl;
-  }
-  else if (period == "W13"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W13/\
-Merged.root");
-    
-    BadSpillPath += "/W13";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W13" << endl;
-  }
-  else if (period == "W14"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W14/\
-Merged.root");
-    
-    BadSpillPath += "/W14";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W14" << endl;
-  }
-  else if(period == "W15"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/W15/\
-Merged.root");
-    
-    BadSpillPath += "/W15";
-    ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   W15" << endl;
-  }
-  else if (period == "all"){
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/\
-AllPeriods/Merged.root");
 
-    ifstream fBadSpills(BadSpillPath+"/WAll_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   All Periods Combined" << endl;
+    cout << "Data from period:   " << period << endl;
   }
-  else {
-    T1->Add("/afs/cern.ch/user/r/rheitz/work/phast.7.156/Robert/XCheck/\
-AllPeriods/Merged.root");
-    
-    ifstream fBadSpills(BadSpillPath+"/WAll_BadSpills.txt");
-    while(fBadSpills >> BadRun >> BadSpill) BadMap[BadRun].push_back(BadSpill);
-    
-    cout << "Data from period:   All Periods Combined" << endl;
+
+  if (!fflag) {
+    cout << "Please enter an input file" << endl;
+    exit(EXIT_FAILURE);
   }
+  else{
+    TFile *f1 = TFile::Open(fname);
+    if(!f1){
+      cout << fname << " does not exist" <<endl;
+      exit(EXIT_FAILURE);
+    }
+    f1->Close();
+  }
+  T1->Add(fname);
   cout << "" << endl;
+
+  if (BadMap.size() == 0){
+    cout << "Bad spills file did not open" << endl;
+    exit(EXIT_FAILURE);    
+  }
 
   //Internal variables and binning
   Double_t M_proton = 0.938272;
@@ -153,7 +140,7 @@ AllPeriods/Merged.root");
   TVectorD tv_xF_bounds; tv_xF_bounds.Use(4, xF_bounds);
   TVectorD tv_M_bounds; tv_M_bounds.Use(4, M_bounds);
 
-    //Averages
+  //Averages
   Double_t AvgPolarization=0.0, AvgDilution=0.0, AvgDilution_corrected=0.0;
   Int_t AvgPolarization_count=0, AvgDilution_count=0;
   
@@ -225,19 +212,25 @@ AllPeriods/Merged.root");
 
   //Event specific
   Int_t NParticle, NTrack, NVertex; 
-  Int_t trigMask;
+  Int_t trigMask, MasterTrigMask;
   Long64_t event, RunNum, SpillNum;
   //DY-variables
   Double_t x_beam, x_target, x_feynman, q_transverse;
   //Target Polarization
-  static Double_t avgUpStream, avgDownStream;
-  static Double_t N14_UpStream, N14_DownStream;
-  static Double_t upStreamCoil1, upStreamCoil2, upStreamCoil3, upStreamCoil4;
-  static Double_t upStreamCoil5;
-  static Double_t downStreamCoil6, downStreamCoil7, downStreamCoil8;
-  static Double_t downStreamCoil9, downStreamCoil10;
-  static Double_t Polarization, dilutionFactor, error_dilutionFactor;
-
+  Double_t avgUpStream, avgDownStream;
+  Double_t N14_UpStream, N14_DownStream;
+  Double_t upStreamCoil1, upStreamCoil2, upStreamCoil3, upStreamCoil4;
+  Double_t upStreamCoil5;
+  Double_t downStreamCoil6, downStreamCoil7, downStreamCoil8;
+  Double_t downStreamCoil9, downStreamCoil10;
+  Double_t Polarization, dilutionFactor, error_dilutionFactor;
+  //Positions
+  Double_t SM1_p1x, SM1_p1y, SM1_p2x, SM1_p2y;
+  Double_t SM2_p1x, SM2_p1y, SM2_p2x, SM2_p2y;
+  Double_t HG01_p1x, HG01_p1y, HG02_y1_p1x, HG02_y1_p1y;
+  Double_t HG02_y2_p1x, HG02_y2_p1y;
+  Double_t HG01_p2x, HG01_p2y, HG02_y1_p2x, HG02_y1_p2y;
+  Double_t HG02_y2_p2x, HG02_y2_p2y;
 
   //Positively charged outgoing muon
   T1->SetBranchAddress("isBeam_p1", &isBeam_p1);
@@ -334,6 +327,9 @@ AllPeriods/Merged.root");
   T1->SetBranchAddress("NTrack", &NTrack);
   T1->SetBranchAddress("NVertex", &NVertex);
   T1->SetBranchAddress("trigMask", &trigMask);
+  T1->SetBranchAddress("MasterTrigMask", &MasterTrigMask);
+  T1->SetBranchAddress("RunNum", &RunNum);
+  T1->SetBranchAddress("SpillNum", &SpillNum);
   T1->SetBranchAddress("event", &event);
   //DY-variables
   T1->SetBranchAddress("x_beam", &x_beam);
@@ -341,29 +337,75 @@ AllPeriods/Merged.root");
   T1->SetBranchAddress("x_feynman", &x_feynman);
   T1->SetBranchAddress("q_transverse", &q_transverse);
   //Target Polarization
-  T1->Branch("avgUpStream", &avgUpStream, "avgUpStream/D");
-  T1->Branch("avgDownStream", &avgDownStream, "avgDownStream/D");
-  T1->Branch("N14_UpStream", &N14_UpStream, "N14_UpStream/D");
-  T1->Branch("N14_DownStream", &N14_DownStream, "N14_DownStream/D");
-  T1->Branch("upStreamCoil1", &upStreamCoil1, "upStreamCoil1/D");
-  T1->Branch("upStreamCoil2", &upStreamCoil2, "upStreamCoil2/D");
-  T1->Branch("upStreamCoil3", &upStreamCoil3, "upStreamCoil3/D");
-  T1->Branch("upStreamCoil4", &upStreamCoil4, "upStreamCoil4/D");
-  T1->Branch("upStreamCoil5", &upStreamCoil5, "upStreamCoil5/D");
-  T1->Branch("downStreamCoil6", &downStreamCoil6, "downStreamCoil6/D");
-  T1->Branch("downStreamCoil7", &downStreamCoil7, "downStreamCoil7/D");
-  T1->Branch("downStreamCoil8", &downStreamCoil8, "downStreamCoil8/D");
-  T1->Branch("downStreamCoil9", &downStreamCoil9, "downStreamCoil9/D");
-  T1->Branch("downStreamCoil10", &downStreamCoil10,
-	     "downStreamCoil10/D");
-  T1->Branch("Polarization", &Polarization, "Polarization/D");
-  T1->Branch("dilutionFactor", &dilutionFactor, "dilutionFactor/D");
-  T1->Branch("error_dilutionFactor", &error_dilutionFactor,
-	     "error_dilutionFactor/D");
+  T1->SetBranchAddress("avgUpStream", &avgUpStream);
+  T1->SetBranchAddress("avgDownStream", &avgDownStream);
+  T1->SetBranchAddress("N14_UpStream", &N14_UpStream);
+  T1->SetBranchAddress("N14_DownStream", &N14_DownStream);
+  T1->SetBranchAddress("upStreamCoil1", &upStreamCoil1);
+  T1->SetBranchAddress("upStreamCoil2", &upStreamCoil2);
+  T1->SetBranchAddress("upStreamCoil3", &upStreamCoil3);
+  T1->SetBranchAddress("upStreamCoil4", &upStreamCoil4);
+  T1->SetBranchAddress("upStreamCoil5", &upStreamCoil5);
+  T1->SetBranchAddress("downStreamCoil6", &downStreamCoil6);
+  T1->SetBranchAddress("downStreamCoil7", &downStreamCoil7);
+  T1->SetBranchAddress("downStreamCoil8", &downStreamCoil8);
+  T1->SetBranchAddress("downStreamCoil9", &downStreamCoil9);
+  T1->SetBranchAddress("downStreamCoil10", &downStreamCoil10);
+  T1->SetBranchAddress("Polarization", &Polarization);
+  T1->SetBranchAddress("dilutionFactor", &dilutionFactor);
+  T1->SetBranchAddress("error_dilutionFactor", &error_dilutionFactor);
+  //Positions
+  T1->SetBranchAddress("SM1_p1x", &SM1_p1x);
+  T1->SetBranchAddress("SM1_p1y", &SM1_p1y);
+  T1->SetBranchAddress("SM1_p2x", &SM1_p2x);
+  T1->SetBranchAddress("SM1_p2y", &SM1_p2y);
+  T1->SetBranchAddress("SM2_p1x", &SM2_p1x);
+  T1->SetBranchAddress("SM2_p1y", &SM2_p1y);
+  T1->SetBranchAddress("SM2_p2x", &SM2_p2x);
+  T1->SetBranchAddress("SM2_p2y", &SM2_p2y);
+  T1->SetBranchAddress("HG01_p1x", &HG01_p1x);
+  T1->SetBranchAddress("HG01_p1y", &HG01_p1y);
+  T1->SetBranchAddress("HG01_p2x", &HG01_p2x);
+  T1->SetBranchAddress("HG01_p2y", &HG01_p2y);
+  T1->SetBranchAddress("HG02_y1_p1x", &HG02_y1_p1x);
+  T1->SetBranchAddress("HG02_y1_p1y", &HG02_y1_p1y);
+  T1->SetBranchAddress("HG02_y1_p2x", &HG02_y1_p2x);
+  T1->SetBranchAddress("HG02_y1_p2y", &HG02_y1_p2y);
+  T1->SetBranchAddress("HG02_y2_p1x", &HG02_y2_p1x);
+  T1->SetBranchAddress("HG02_y2_p1y", &HG02_y2_p1y);
+  T1->SetBranchAddress("HG02_y2_p2x", &HG02_y2_p2x);
+  T1->SetBranchAddress("HG02_y2_p2y", &HG02_y2_p2y);
 
-  
+
+  //Cut histograms
+  const Int_t nCutHist = 11;//Number of impact cut hist
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
+  
+  TH1D *hCut_VxZ[nRealCuts];
+  TH1D *hCut_MuPTheta[nRealCuts],*hCut_MuPPhi[nRealCuts],*hCut_MuPqP[nRealCuts];
+  TH1D *hCut_MuMTheta[nRealCuts],*hCut_MuMPhi[nRealCuts],*hCut_MuMqP[nRealCuts];
+  TH1D *hCut_xN[nRealCuts], *hCut_xPi[nRealCuts], *hCut_xF[nRealCuts];
+  TH1D *hCut_qT[nRealCuts];
+
+  TH1D *hImpactCuts[nCutHist][nRealCuts];
+  
+  Int_t ih = 0;
+  HistArraySetupReal(hCut_VxZ, hImpactCuts, 500, -500, 100, ih, "VxZ"); ih++;
+  HistArraySetupReal(hCut_MuPTheta, hImpactCuts, 100, 0, 0.3, ih, "MuPTheta");
+  ih++;
+  HistArraySetupReal(hCut_MuPPhi, hImpactCuts, 100, -TMath::Pi(), TMath::Pi(),
+		     ih, "MuPPhi"); ih++;
+  HistArraySetupReal(hCut_MuPqP, hImpactCuts, 200, 0, 200, ih, "MuPqP"); ih++;
+  HistArraySetupReal(hCut_MuMTheta, hImpactCuts, 100, 0, 0.3, ih, "MuMTheta");
+  ih++;
+  HistArraySetupReal(hCut_MuMPhi, hImpactCuts, 100, -TMath::Pi(), TMath::Pi(),
+		     ih, "MuMPhi"); ih++;
+  HistArraySetupReal(hCut_MuMqP, hImpactCuts, 200, -200, 0, ih, "MuMqP"); ih++;
+  HistArraySetupReal(hCut_xN, hImpactCuts, 100, 0, 1, ih, "xN"); ih++;
+  HistArraySetupReal(hCut_xPi, hImpactCuts, 100, 0, 1, ih, "xPi"); ih++;
+  HistArraySetupReal(hCut_xF, hImpactCuts, 200, -1, 1, ih, "xF"); ih++;
+  HistArraySetupReal(hCut_qT, hImpactCuts, 200, 0, 5, ih, "qT"); ih++;
 
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
   Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS;
@@ -394,6 +436,26 @@ AllPeriods/Merged.root");
   tree->Branch("vx_z", &vx_z, "vx_z/D");
   tree->Branch("vx_x", &vx_x, "vx_x/D");
   tree->Branch("vx_y", &vx_y, "vx_y/D");
+  tree->Branch("SM1_p1x", &SM1_p1x, "SM1_p1x/D");
+  tree->Branch("SM1_p1y", &SM1_p1y, "SM1_p1y/D");
+  tree->Branch("SM1_p2x", &SM1_p2x, "SM1_p2x/D");
+  tree->Branch("SM1_p2y", &SM1_p2y, "SM1_p2y/D");
+  tree->Branch("SM2_p1x", &SM2_p1x, "SM2_p1x/D");
+  tree->Branch("SM2_p1y", &SM2_p1y, "SM2_p1y/D");
+  tree->Branch("SM2_p2x", &SM2_p2x, "SM2_p2x/D");
+  tree->Branch("SM2_p2y", &SM2_p2y, "SM2_p2y/D");
+  tree->Branch("HG01_p1x", &HG01_p1x, "HG01_p1x/D");
+  tree->Branch("HG01_p1y", &HG01_p1y, "HG01_p1y/D");
+  tree->Branch("HG01_p2x", &HG01_p2x, "HG01_p2x/D");
+  tree->Branch("HG01_p2y", &HG01_p2y, "HG01_p2y/D");
+  tree->Branch("HG02_y1_p1x", &HG02_y1_p1x, "HG02_y1_p1x/D");
+  tree->Branch("HG02_y1_p1y", &HG02_y1_p1y, "HG02_y1_p1y/D");
+  tree->Branch("HG02_y1_p2x", &HG02_y1_p2x, "HG02_y1_p2x/D");
+  tree->Branch("HG02_y1_p2y", &HG02_y1_p2y, "HG02_y1_p2y/D");
+  tree->Branch("HG02_y2_p1x", &HG02_y2_p1x, "HG02_y2_p1x/D");
+  tree->Branch("HG02_y2_p1y", &HG02_y2_p1y, "HG02_y2_p1y/D");
+  tree->Branch("HG02_y2_p2x", &HG02_y2_p2x, "HG02_y2_p2x/D");
+  tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");  
 
   Int_t tree_entries = T1->GetEntries();
   //Int_t tree_entries = 1000;//Debug
@@ -405,6 +467,14 @@ AllPeriods/Merged.root");
     //Cuts
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
+    
+    Double_t cut_variables[nCutHist] = {vx_z, theta_traj1,
+					phi_traj1, qP_traj1, theta_traj2,
+					phi_traj2,
+					qP_traj2, x_beam, x_target,
+					x_feynman, q_transverse};
+    Int_t icut = 0;
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
     map<Long64_t, vector<Long64_t> >::iterator it = BadMap.find(RunNum);
     if (it != BadMap.end() ){
@@ -414,6 +484,7 @@ AllPeriods/Merged.root");
 			 SpillNum) != BadMap[it->first].end() ) continue;
     }
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Bad spills
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
     TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
     TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
@@ -424,17 +495,21 @@ AllPeriods/Merged.root");
     if (x_target < 0.0 || x_target > 1.0) continue;
     if (x_feynman < -1.0 || x_feynman > 1.0) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if (q_transverse < 0.4 || q_transverse > 5.0) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//qT cuts
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if ( (vx_z < -294.5 || vx_z > -239.3) && (vx_z < -219.5 || vx_z > -164.3)
 	 ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target z-cut
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if(TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >= TMath::Power(1.9, 2)
        ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target radial cut
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
         
     ////All data after cuts
     //////////////
@@ -448,15 +523,6 @@ AllPeriods/Merged.root");
     TLorentzVector lv_beam_main(beam_X, beam_Y, beam_Z, beam_E);
     //Int_t period = -1;//period 1 defined as upstream up, downstream down
 
-    Spin[0] = -1.0*avgUpStream/(TMath::Abs(avgUpStream) );
-    Spin[1] = avgUpStream;
-    Spin[2] = upStreamCoil1;
-    Spin[3] = upStreamCoil2;
-    Spin[4] = upStreamCoil3;
-    Spin[5] = upStreamCoil4;
-    Spin[6] = upStreamCoil5;
-    targetPosition = 0;
-
     AvgDilution += TMath::Abs(dilutionFactor);
     AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
     AvgDilution_count++;
@@ -468,7 +534,6 @@ AllPeriods/Merged.root");
     BinAvg(AvgDil_M, AvgDil_M_count, vDiMuon_invM, M_bounds, correct_dil);
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
       Spin[0] = -1.0*avgUpStream/(TMath::Abs(avgUpStream) );
-      cout << Spin[0] << " " << avgUpStream << endl;
       Spin[1] = avgUpStream;
       Spin[2] = upStreamCoil1;
       Spin[3] = upStreamCoil2;
@@ -566,27 +631,64 @@ AllPeriods/Merged.root");
   cout << "!!!!!!!!!!!!!!!" << endl;
 
   //Cuts histogram
-  const Int_t nCuts = 6;
-  TString cutNames[nCuts] = {"All Data", "GoodSpills", "xPion,xN,xF","0.4<qT<5",
-			     "Target z-cut", "Target radius"};
-  for (Int_t i=0, j=1; i<nCuts; i++, j+=cut_space){
+  TString cutNames[nRealCuts] = {"AllData", "GoodSpills", "xPion,xN,xF",
+				 "0.4<qT<5",
+				 "TargetZ-cut", "TargetRadius"};
+  for (Int_t i=0, j=1; i<nRealCuts; i++, j+=cut_space){
     Int_t bin_index = hCuts->GetXaxis()->FindBin(j);
     hCuts->GetXaxis()->SetBinLabel(bin_index, cutNames[i]);
   }
-  //hCuts->Draw();
 
-  TString outFile="RealData";
-  if (argc < 3) cout << "No file output" << endl;
-  else {
-    outFile += argv[1]; outFile += ".root";
+  if (!wflag && !Qflag) cout << "No file output" << endl;
+  else{
+    if (wflag) outFile += "RealData.root";
     TFile *myFile = new TFile(outFile, "RECREATE");
     hCuts->Write();
     tree->Write();
-  
+
     tv_xN_bounds.Write("tv_xN_bounds");
     tv_xPi_bounds.Write("tv_xPi_bounds");
     tv_xF_bounds.Write("tv_xF_bounds");
     tv_M_bounds.Write("tv_M_bounds");
+
+    TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
+    TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
+    TDirectory *MuPPhi_CutImpact = myFile->mkdir("MuPPhi_CutImpact");
+    TDirectory *MuPqP_CutImpact = myFile->mkdir("MuPqP_CutImpact");
+    TDirectory *MuMTheta_CutImpact = myFile->mkdir("MuMTheta_CutImpact");
+    TDirectory *MuMPhi_CutImpact = myFile->mkdir("MuMPhi_CutImpact");
+    TDirectory *MuMqP_CutImpact = myFile->mkdir("MuMqP_CutImpact");
+    TDirectory *xN_CutImpact = myFile->mkdir("xN_CutImpact");
+    TDirectory *xPi_CutImpact = myFile->mkdir("xPi_CutImpact");
+    TDirectory *xF_CutImpact = myFile->mkdir("xF_CutImpact");
+    TDirectory *qT_CutImpact = myFile->mkdir("qT_CutImpact");
+    for (Int_t i=0; i<nRealCuts; i++) {
+      VxZ_CutImpact->cd();
+      hCut_VxZ[i]->Write(cutNames[i]);
+
+      MuPTheta_CutImpact->cd();
+      hCut_MuPTheta[i]->Write(cutNames[i]);
+      MuPPhi_CutImpact->cd();
+      hCut_MuPPhi[i]->Write(cutNames[i]);
+      MuPqP_CutImpact->cd();
+      hCut_MuPqP[i]->Write(cutNames[i]);
+
+      MuMTheta_CutImpact->cd();
+      hCut_MuMTheta[i]->Write(cutNames[i]);
+      MuMPhi_CutImpact->cd();
+      hCut_MuMPhi[i]->Write(cutNames[i]);
+      MuMqP_CutImpact->cd();
+      hCut_MuMqP[i]->Write(cutNames[i]);
+
+      xN_CutImpact->cd();
+      hCut_xN[i]->Write(cutNames[i]);
+      xPi_CutImpact->cd();
+      hCut_xPi[i]->Write(cutNames[i]);
+      xF_CutImpact->cd();
+      hCut_xF[i]->Write(cutNames[i]);
+      qT_CutImpact->cd();
+      hCut_qT[i]->Write(cutNames[i]);
+    }
 
     cout << myFile->GetName() << " was written" << endl;
     myFile->Close();
