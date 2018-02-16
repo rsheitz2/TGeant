@@ -1,0 +1,9 @@
+###############
+Basic git commands
+###############
+
+   push local to remote:
+git push origin master
+
+   pull remote to local:
+git pull origin
