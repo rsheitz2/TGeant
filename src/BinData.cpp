@@ -41,3 +41,27 @@ Bool_t BinAvg(Double_t *Avg, Int_t *count, Double_t binVal,
 
   return true;
 }
+
+
+Bool_t BinAvg(Double_t *Avg, Int_t *count, Double_t binVal,
+	      Double_t *binValBounds, Double_t avgVal, Int_t nBins){
+  if(binVal < binValBounds[0] ) {
+    std::cout << "!!!!!!!!!!!!!!!" << std::endl;
+    std::cout << "bin value too low!!!!" << std::endl;
+    return false;
+  }
+  
+  for (Int_t i=0; i<nBins; i++) {
+    if(binVal < binValBounds[i+1]){
+      Avg[i] += avgVal;
+      count[i]++;
+      
+      return true;
+    }
+  }
+
+  std::cout << "!!!!!!!!!!!!!!!" << std::endl;
+  std::cout << "bin value too high!!!!" << std::endl;
+  return false;
+
+}

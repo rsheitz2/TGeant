@@ -69,4 +69,7 @@ void BinData(TH1D** h1, Double_t valueCheck, Double_t valueFill, Double_t* bins,
 Bool_t BinAvg(Double_t *Avg, Int_t *count, Double_t binVal,
 	      Double_t *binValBound, Double_t avgVal);
 
+Bool_t BinAvg(Double_t *Avg, Int_t *count, Double_t binVal,
+	      Double_t *binValBound, Double_t avgVal, Int_t nBins);
+
 #endif
