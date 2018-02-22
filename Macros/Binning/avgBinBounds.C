@@ -16,7 +16,8 @@ int main(int argc, char **argv){
     cout << "" << endl;
     cout << "Option:  -P period         (which period to take bad spills from)"
 	 << endl;
-    cout << "(i.e W07, W08...  Can also enter \"WAll\" for all periods)";
+    cout << "(i.e W07, W08...  Can also enter \"WAll\" for ALL periods or" << 
+		" \"MC\" for NO periods)";
     cout << "" << endl;
     cout << "Option:  -u ##		(new UserEvent number, default==420)"
 	 << endl;
@@ -95,13 +96,14 @@ int main(int argc, char **argv){
   else userEvent += userNum + "/Particles";
   TChain* T1 = new TChain(userEvent);
   
-  TString BadSpillPath = "/afs/cern.ch/work/r/rheitz/Analysis/TGeant/Main/src/BadSpills/t3/";//Get badspill information
+  TString BadSpillPath = "Src/BadSpills/t3/";//Get badspill information
   map <Long64_t, vector<Long64_t> > BadMap;
   Long64_t BadRun, BadSpill;
   if (!Pflag){
     cout << "Please enter a period for bad spills list" << endl;
     exit(EXIT_FAILURE);
   }
+  else if (period == "MC"){}
   else{
     BadSpillPath += period;
     ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
@@ -125,8 +127,9 @@ int main(int argc, char **argv){
   T1->Add(fname);
   cout << "" << endl;
 
-  if (BadMap.size() == 0){
-    cout << "Bad spills file did not open" << endl;
+  if (period == "MC"){}
+  else if (BadMap.size() == 0){
+    cout << "\"MC\" option not specified and Bad spills file did not open" << endl;
     exit(EXIT_FAILURE);    
   }
 
@@ -416,12 +419,14 @@ int main(int argc, char **argv){
     ////All data after cuts
     //////////////
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
-      AvgDilution += TMath::Abs(dilutionFactor);
-      AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
-      AvgDilution_count++;
+		if (period != "MC") {
+			AvgDilution += TMath::Abs(dilutionFactor);
+			AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
+			AvgDilution_count++;
 
-      Double_t correct_dil = 0.95*TMath::Abs(dilutionFactor);
-      Double_t pol = TMath::Abs(Polarization);
+			AvgPolarization += TMath::Abs(Polarization);
+			AvgPolarization_count++;
+		}
       
       sort_xTarg.push_back(x_target);
       sort_xBeam.push_back(x_beam);
@@ -430,12 +435,14 @@ int main(int argc, char **argv){
       sort_mass.push_back(vDiMuon_invM);
     }//Up stream
     else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
-      AvgDilution += TMath::Abs(dilutionFactor);
-      AvgDilution_corrected += 0.91*TMath::Abs(dilutionFactor);
-      AvgDilution_count++;
+	  if (period != "MC") {
+		  AvgDilution += TMath::Abs(dilutionFactor);
+		  AvgDilution_corrected += 0.91*TMath::Abs(dilutionFactor);
+		  AvgDilution_count++;
 
-      Double_t correct_dil = 0.91*TMath::Abs(dilutionFactor);
-      Double_t pol = TMath::Abs(Polarization);
+		  AvgPolarization += TMath::Abs(Polarization);
+		  AvgPolarization_count++;
+	  }
       
       sort_xTarg.push_back(x_target);
       sort_xBeam.push_back(x_beam);
@@ -464,13 +471,17 @@ int main(int argc, char **argv){
     PrintBin(binValueFile, sort_mass, nBins, "mass");
 
     binValueFile.close();
+
+	cout << "File: " << outFile << " was written" << endl;
   }
 
-  cout << " " << endl;
-  cout << "Average dilution factor " << AvgDilution_corrected/AvgDilution_count;
-  cout << endl;
-  cout << "Average polarization " << AvgPolarization/AvgPolarization_count;
-  cout << endl;;
+  if (period != "MC") {
+	  cout << " " << endl;
+	  cout << "Average dilution factor " << AvgDilution_corrected/AvgDilution_count;
+	  cout << endl;
+	  cout << "Average polarization " << AvgPolarization/AvgPolarization_count;
+	  cout << endl;;
+  }
   
   cout << "!!!!!!!!!!!!!!!" << endl;
   cout << "Code Finished" << endl;

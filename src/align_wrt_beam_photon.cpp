@@ -5,8 +5,8 @@ void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target, TLorent
 			   TLorentzVector& virtual_photon, TLorentzVector& lepton1, TLorentzVector& lepton2){
   //spin1 is upstream target or true target spin
   //spin2 is downstream target or simple (always polarized up) spin
-  //lepton1 is mu minus
-  //lepton2 is mu plus
+  //lepton1 is mu minus or mu plus
+  //lepton2 is mu plus or mu minus
   TVector3 beam3= beam.Vect();
   TVector3 target3= target.Vect();
   TVector3 spin1_3= spin1.Vect();

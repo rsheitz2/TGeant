@@ -6,4 +6,4 @@ Basic git commands
 git push origin master
 
    pull remote to local:
-git pull origin
+git pull origin master

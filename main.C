@@ -14,11 +14,14 @@ int main(int argc, char **argv){
     cout << "./main [options] [-ffilename]" << endl;
     cout << "filename should be the full path name" << endl;
     cout << "" << endl;
-    cout << "Option:  -u ##		(new UserEvent number, default==415)"
+    cout << "Option:  -u ##		(new UserEvent number, default==420)"
 	 << endl;
     cout << "Option:  -w		(write output to file)" << endl;
     cout << "        default output file is named \"Output.root\"" << endl;
     cout << "Option:  -Q outName	(write output to file to outName)"
+	 << endl;
+    cout << "Option:  -b textfile with binning information	";
+    cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"
 	 << endl;
     cout << "" << endl;
 	
@@ -27,15 +30,19 @@ int main(int argc, char **argv){
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
-  Int_t uflag=0, wflag=0, Qflag=0, fflag=0;
+  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, binFlag=0;
   Int_t c;
-  TString userNum = "", fname = "", outFile = "";
+  TString userNum = "", fname = "", outFile = "", binFile="";
   
-  while ((c = getopt (argc, argv, "wu:f:Q:")) != -1) {
+  while ((c = getopt (argc, argv, "wb:u:f:Q:")) != -1) {
     switch (c) {
     case 'u':
       uflag = 1;
       userNum += optarg;
+      break;
+    case 'b':
+      binFlag = 1;
+      binFile += optarg;
       break;
     case 'w':
       wflag = 1;
@@ -54,6 +61,10 @@ int main(int argc, char **argv){
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (optopt == 'f')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'Q')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'b')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (isprint (optopt))
 	fprintf (stderr, "Unknown option `-%c'.\n", optopt);
       else
@@ -66,14 +77,120 @@ int main(int argc, char **argv){
     }
   }
 
-  //Get tree from file
+  //Basic Checks
+  if(wflag && Qflag){
+    cout << "Please only enter -w or -Qoutfile.  Not both" << endl;
+    exit(EXIT_FAILURE);
+  }
+
   TString userEvent = "UserEvent";
   if (!uflag) {
-    userEvent += "415/Particles";
-    cout << "Default UserEvent415 used" << endl;
+    userEvent += "420/Particles";
+    cout << "Default UserEvent420 used" << endl;
   }
   else userEvent += userNum + "/Particles";
   TChain* T1 = new TChain(userEvent);
+
+  vector<Double_t> xN_bounds, xN_xval; 
+  vector<Double_t> xPi_bounds, xPi_xval;
+  vector<Double_t> xF_bounds, xF_xval; 
+  vector<Double_t> pT_bounds, pT_xval;
+  vector<Double_t> M_bounds, M_xval;
+  xN_bounds.push_back(0.0);
+  xPi_bounds.push_back(0.0);
+  xF_bounds.push_back(-1.0);
+  pT_bounds.push_back(0.4);
+  M_bounds.push_back(4.3);
+  if (binFlag) {
+    string line;
+    TString dy_type = "";
+    Int_t xval = 1;
+    ifstream f_bins(binFile);
+    while (!f_bins.eof()) {
+      getline(f_bins,line);
+
+      if (line[1] == 'N') {
+	if (dy_type == "xN") xval = 1;
+	else {
+	  dy_type = "xN";
+	  xval = 0;
+	}			
+      }
+      else if (line[1] == 'P') {
+	if (dy_type == "xPi") xval = 1;
+	else {
+	  dy_type = "xPi";
+	  xval = 0;
+	}			
+      }
+      else if (line[1] == 'F') {
+	if (dy_type == "xF") xval = 1;
+	else {
+	  dy_type = "xF";
+	  xval = 0;
+	}			
+      }
+      else if (line[1] == 'T') {
+	if (dy_type == "pT") xval = 1;
+	else {
+	  dy_type = "pT";
+	  xval = 0;
+	}			
+      }
+      else if (line[1] == 'a') {
+	if (dy_type == "M") xval = 1;
+	else {
+	  dy_type = "M";
+	  xval = 0;
+	}			
+      }
+      if (line[0] == 'x' || line[0] == 'p' || line[0] == 'm') continue;
+
+      if (dy_type == "xN"){
+	if (xval == 0) xN_bounds.push_back(atof(line.c_str() ) );
+	else xN_xval.push_back(atof(line.c_str() ) );
+      }
+      else if (dy_type == "xPi"){
+	if (xval == 0) xPi_bounds.push_back(atof(line.c_str() ) );
+	else xPi_xval.push_back(atof(line.c_str() ) );
+      }
+      else if (dy_type == "xF"){
+	if (xval == 0) xF_bounds.push_back(atof(line.c_str() ) );
+	else xF_xval.push_back(atof(line.c_str() ) );
+      }
+      else if (dy_type == "pT"){
+	if (xval == 0) pT_bounds.push_back(atof(line.c_str() ) );
+	else pT_xval.push_back(atof(line.c_str() ) );
+      }
+      else if (dy_type == "M"){
+	if (xval == 0) M_bounds.push_back(atof(line.c_str() ) );
+	else M_xval.push_back(atof(line.c_str() ) );
+      }
+    }//end file loop
+  }//end binFlag
+  else {//HM DY binning
+    xN_bounds.push_back(0.13);
+    xN_bounds.push_back(0.19);
+    xPi_bounds.push_back(0.40);
+    xPi_bounds.push_back(0.56);
+    xF_bounds.push_back(0.21);
+    xF_bounds.push_back(0.41);
+    pT_bounds.push_back(0.9);
+    pT_bounds.push_back(1.4);
+
+    M_bounds.push_back(4.75);
+    M_bounds.push_back(5.50);
+  }
+  xN_bounds.push_back(1.0);
+  xPi_bounds.push_back(1.0);
+  xF_bounds.push_back(1.0);
+  pT_bounds.push_back(5.0);
+  M_bounds.push_back(8.5);
+  cout << " " << endl;
+  cout << "Warning!!!!!!!" << endl;
+  cout << "High Mass" << endl;
+  cout << "!!!!!!!!!!!!!!!" << endl;
+  cout << " " << endl;
 
   if (!fflag) {
     cout << "Please enter an input file" << endl;
@@ -91,18 +208,41 @@ int main(int argc, char **argv){
   
   //Internal variables and binning
   Double_t M_proton = 0.938272;
+  Int_t nBounds = xN_bounds.size();
 
-  //Binnings
-  Double_t xN_bounds[] = {0.00, 0.13, 0.19, 1.00};
-  Double_t xPi_bounds[] = {0.00, 0.40, 0.56, 1.00};
-  Double_t xF_bounds[] = {-1.0, 0.21, 0.41, 1.00};
-  Double_t M_bounds[] = {4.30, 4.75, 5.50, 8.50};
+  TVectorD tv_xN_bounds(nBounds);
+  TVectorD tv_xPi_bounds(nBounds);
+  TVectorD tv_xF_bounds(nBounds);
+  TVectorD tv_pT_bounds(nBounds);
+  TVectorD tv_M_bounds(nBounds);
+  for (UInt_t i=0; i<xN_bounds.size(); i++) {
+    tv_xN_bounds[i] = xN_bounds.at(i);
+    tv_xPi_bounds[i] = xPi_bounds.at(i);
+    tv_xF_bounds[i] = xF_bounds.at(i);
+    tv_pT_bounds[i] = pT_bounds.at(i);
+    tv_M_bounds[i] = M_bounds.at(i);
+  }
+  Int_t nBins = xN_xval.size();
+  if (nBins == 0){
+    cout << " " << endl;
+    cout << "Error: nBins = 0" << endl;
+    cout << " " << endl;
+    exit(EXIT_FAILURE);
+  }
+  TVectorD tv_xN_xval(nBins);
+  TVectorD tv_xPi_xval(nBins);
+  TVectorD tv_xF_xval(nBins);
+  TVectorD tv_pT_xval(nBins);
+  TVectorD tv_M_xval(nBins);
+  for (UInt_t i=0; i<xN_xval.size(); i++) {
+    tv_xN_xval[i] = xN_xval.at(i);
+    tv_xPi_xval[i] = xPi_xval.at(i);
+    tv_xF_xval[i] = xF_xval.at(i);
+    tv_pT_xval[i] = pT_xval.at(i);
+    tv_M_xval[i] = M_xval.at(i);
+  }
   
-  TVectorD tv_xN_bounds; tv_xN_bounds.Use(4, xN_bounds);
-  TVectorD tv_xPi_bounds; tv_xPi_bounds.Use(4, xPi_bounds);
-  TVectorD tv_xF_bounds; tv_xF_bounds.Use(4, xF_bounds);
-  TVectorD tv_M_bounds; tv_M_bounds.Use(4, M_bounds);
-  
+
   //////UserEvent Information
   /////////////////
   //Positively charged outgoing muon
@@ -400,6 +540,7 @@ int main(int argc, char **argv){
   tree->Branch("q_transverse", &q_transverse, "q_transverse/D");
   tree->Branch("Mmumu", &vDiMuon_invM, "Mmumu/D");
   tree->Branch("targetPosition", &targetPosition, "targetPosition/I");
+  tree->Branch("Spin", &Spin, "Spin/D");
   tree->Branch("theta_traj1", &theta_traj1, "theta_traj1/D");
   tree->Branch("phi_traj1", &phi_traj1, "phi_traj1/D");
   tree->Branch("qP_traj1", &qP_traj1, "qP_traj1/D");
@@ -447,7 +588,7 @@ int main(int argc, char **argv){
   tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");  
 
   Int_t tree_entries = T1->GetEntries();
-  //Int_t tree_entries = 1000;//Debug
+  //Int_t tree_entries = 10000; cout << "Debugging" << endl;//Debug
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
   for (Int_t i=0; i<tree_entries; i++){
@@ -506,14 +647,14 @@ int main(int argc, char **argv){
     Double_t Gen_muMinus[] = {vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E};
     //Int_t period = -1;//period 1 defined as upstream up, downstream down
 
-    //if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
-    if (vx_z <= -230){//No target cuts
+    if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
+    //if (vx_z <= -230){//No target cuts
       Spin = 1.0;
       targetPosition = 0;
 
     }//Up stream
-    //else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
-    else if (vx_z >= -230){//No target cuts
+    else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
+    //else if (vx_z >= -230){//No target cuts
       Spin = -1.0;
       targetPosition = 1;
 
@@ -619,8 +760,8 @@ int main(int argc, char **argv){
   }
 
   if (!wflag && !Qflag) cout << "No file output" << endl;
-  else if (!Qflag){
-    outFile += "Output.root";
+  else{ 
+    if (wflag) outFile += "RealData.root";
     TFile *myFile = new TFile(outFile, "RECREATE");
     hCuts->Write();
     tree->Write();
@@ -628,7 +769,14 @@ int main(int argc, char **argv){
     tv_xN_bounds.Write("tv_xN_bounds");
     tv_xPi_bounds.Write("tv_xPi_bounds");
     tv_xF_bounds.Write("tv_xF_bounds");
+    tv_pT_bounds.Write("tv_pT_bounds");
     tv_M_bounds.Write("tv_M_bounds");
+
+    tv_xN_xval.Write("tv_xN_xval");
+    tv_xPi_xval.Write("tv_xPi_xval");
+    tv_xF_xval.Write("tv_xF_xval");
+    tv_pT_xval.Write("tv_pT_xval");
+    tv_M_xval.Write("tv_M_xval");
 
     TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
     TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
@@ -672,19 +820,6 @@ int main(int argc, char **argv){
     cout << myFile->GetName() << " was written" << endl;
     myFile->Close();
   }
-  else {
-    TFile *myFile = new TFile(outFile, "RECREATE");
-    hCuts->Write();
-    tree->Write();
-  
-    tv_xN_bounds.Write("tv_xN_bounds");
-    tv_xPi_bounds.Write("tv_xPi_bounds");
-    tv_xF_bounds.Write("tv_xF_bounds");
-    tv_M_bounds.Write("tv_M_bounds");
 
-    cout << myFile->GetName() << " was written" << endl;
-    myFile->Close();
-  }
-    
   theApp.Run();//Needed to make root graphics work on C++
 }//main

@@ -1,9 +1,9 @@
 CC=g++
 #CFLAGS=`root-config --cflags --libs` -Wall
 CFLAGS=`root-config --cflags --libs`
-INC_PATH=-I/afs/cern.ch/work/r/rheitz/Analysis/TGeant/Main/Macros/Binning/Src
+INC_PATH=-ISrc
 
-SRC = /afs/cern.ch/work/r/rheitz/Analysis/TGeant/Main/Macros/Binning/Src
+SRC = Src
 
 #Debug with OPT=-g
 #Reduce compilation time and be able to debug with OPT=-O0
