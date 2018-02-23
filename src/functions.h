@@ -75,4 +75,8 @@ Bool_t BinAvg(Double_t *Avg, Int_t *count, Double_t binVal,
 Bool_t BinAvg(std::vector<Double_t> &Avg, std::vector<Int_t> &count, 
 			  Double_t binVal, std::vector<Double_t> &binValBounds, 
 			  Double_t avgVal);
+
+Bool_t BinAvg(TVectorD &Avg, std::vector<Int_t> &count, 
+	      Double_t binVal, std::vector<Double_t> &binValBounds, 
+	      Double_t avgVal);
 #endif

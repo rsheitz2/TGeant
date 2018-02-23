@@ -17,7 +17,7 @@ int main(int argc, char **argv){
     cout << "Option:  -P period         (which period to take bad spills from)"
 	 << endl;
     cout << "(i.e W07, W08...  Can also enter \"WAll\" for ALL periods or" << 
-		" \"MC\" for NO periods)";
+      " \"MC\" for NO periods)";
     cout << "" << endl;
     cout << "Option:  -u ##		(new UserEvent number, default==420)"
 	 << endl;
@@ -146,6 +146,9 @@ int main(int argc, char **argv){
   vector<Double_t> sort_xF;
   vector<Double_t> sort_pT;
   vector<Double_t> sort_mass;
+  vector<Double_t> sort_rad;
+  vector<Double_t> sort_vxZ_upstream;
+  vector<Double_t> sort_vxZ_downstream;
 
   
   //////UserEvent Information
@@ -418,38 +421,41 @@ int main(int argc, char **argv){
     
     ////All data after cuts
     //////////////
-    if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
-		if (period != "MC") {
-			AvgDilution += TMath::Abs(dilutionFactor);
-			AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
-			AvgDilution_count++;
+    Double_t radius = TMath::Sqrt(vx_x*vx_x+ vx_y*vx_y);
 
-			AvgPolarization += TMath::Abs(Polarization);
-			AvgPolarization_count++;
-		}
-      
-      sort_xTarg.push_back(x_target);
-      sort_xBeam.push_back(x_beam);
-      sort_xF.push_back(x_feynman);
-      sort_pT.push_back(q_transverse);
-      sort_mass.push_back(vDiMuon_invM);
+
+    if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
+      if (period != "MC") {
+	AvgDilution += TMath::Abs(dilutionFactor);
+	AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
+	AvgDilution_count++;
+
+	AvgPolarization += TMath::Abs(Polarization);
+	AvgPolarization_count++;
+      }
+
+      sort_vxZ_upstream.push_back(vx_z);
     }//Up stream
     else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
-	  if (period != "MC") {
-		  AvgDilution += TMath::Abs(dilutionFactor);
-		  AvgDilution_corrected += 0.91*TMath::Abs(dilutionFactor);
-		  AvgDilution_count++;
+      if (period != "MC") {
+	AvgDilution += TMath::Abs(dilutionFactor);
+	AvgDilution_corrected += 0.91*TMath::Abs(dilutionFactor);
+	AvgDilution_count++;
 
-		  AvgPolarization += TMath::Abs(Polarization);
-		  AvgPolarization_count++;
-	  }
-      
-      sort_xTarg.push_back(x_target);
-      sort_xBeam.push_back(x_beam);
-      sort_xF.push_back(x_feynman);
-      sort_pT.push_back(q_transverse);
-      sort_mass.push_back(vDiMuon_invM);
+	AvgPolarization += TMath::Abs(Polarization);
+	AvgPolarization_count++;
+      }
+
+      sort_vxZ_downstream.push_back(vx_z);
     }//Down Stream
+
+    //Both targets
+    sort_xTarg.push_back(x_target);
+    sort_xBeam.push_back(x_beam);
+    sort_xF.push_back(x_feynman);
+    sort_pT.push_back(q_transverse);
+    sort_mass.push_back(vDiMuon_invM);
+    sort_rad.push_back(radius);
 
   }//tree entries
   
@@ -469,18 +475,24 @@ int main(int argc, char **argv){
     PrintBin(binValueFile, sort_pT, nBins, "pT");
     std::sort(sort_mass.begin(), sort_mass.end() );
     PrintBin(binValueFile, sort_mass, nBins, "mass");
-
+    std::sort(sort_rad.begin(), sort_rad.end() );
+    PrintBin(binValueFile, sort_rad, nBins, "rad");
+    std::sort(sort_vxZ_upstream.begin(), sort_vxZ_upstream.end() );
+    PrintBin(binValueFile, sort_vxZ_upstream, nBins, "vxZ_upstream");
+    std::sort(sort_vxZ_downstream.begin(), sort_vxZ_downstream.end() );
+    PrintBin(binValueFile, sort_vxZ_downstream, nBins, "vxZ_downstream");
+    
     binValueFile.close();
 
-	cout << "File: " << outFile << " was written" << endl;
+    cout << "File: " << outFile << " was written" << endl;
   }
 
   if (period != "MC") {
-	  cout << " " << endl;
-	  cout << "Average dilution factor " << AvgDilution_corrected/AvgDilution_count;
-	  cout << endl;
-	  cout << "Average polarization " << AvgPolarization/AvgPolarization_count;
-	  cout << endl;;
+    cout << " " << endl;
+    cout << "Average dilution factor " << AvgDilution_corrected/AvgDilution_count;
+    cout << endl;
+    cout << "Average polarization " << AvgPolarization/AvgPolarization_count;
+    cout << endl;;
   }
   
   cout << "!!!!!!!!!!!!!!!" << endl;
