@@ -347,7 +347,6 @@ int main(int argc, char **argv){
   Double_t AvgPolarization=0.0, AvgDilution=0.0, AvgDilution_corrected=0.0;
   Int_t AvgPolarization_count=0, AvgDilution_count=0;
 
-  TVectorD Dil_xN_test(nBins);
   vector<Double_t> AvgPol_xN(nBins, 0.0), AvgDil_xN(nBins, 0.0);
   vector<Int_t> AvgPol_xN_count(nBins, 0), AvgDil_xN_count(nBins, 0);
   vector<Double_t> AvgPol_xN_UpStream(nBins, 0.0), AvgDil_xN_UpStream(nBins, 0.0);
@@ -683,7 +682,6 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("HG02_y2_p2x", &HG02_y2_p2x);
   T1->SetBranchAddress("HG02_y2_p2y", &HG02_y2_p2y);
 
-
   //Cut histograms
   const Int_t nCutHist = 11;//Number of impact cut hist
   //const Int_t nRealCuts = 7;//Number of cuts made (setup.h)
@@ -967,7 +965,6 @@ int main(int argc, char **argv){
       AvgDilution_count++;
 
       Double_t correct_dil = 0.91*TMath::Abs(dilutionFactor);
-      BinAvg(Dil_xN_test, AvgDil_xN_count, x_target, xN_bounds, correct_dil);
       BinAvg(AvgDil_xN, AvgDil_xN_count, x_target, xN_bounds, correct_dil);
       BinAvg(AvgDil_xPi, AvgDil_xPi_count, x_beam, xPi_bounds, correct_dil);
       BinAvg(AvgDil_xF, AvgDil_xF_count, x_feynman, xF_bounds, correct_dil);
@@ -1201,6 +1198,10 @@ int main(int argc, char **argv){
     Dil_xF[i] = AvgDil_xF[i]/AvgDil_xF_count[i];
     Dil_pT[i] = AvgDil_pT[i]/AvgDil_pT_count[i];
     Dil_M[i] = AvgDil_M[i]/AvgDil_M_count[i];
+    Dil_rad[i] = AvgDil_rad[i]/AvgDil_rad_count[i];
+    Dil_vxZ_upstream[i] = AvgDil_vxZ_upstream[i]/AvgDil_vxZ_count_UpStream[i];
+    Dil_vxZ_downstream[i] =
+      AvgDil_vxZ_downstream[i]/AvgDil_vxZ_count_DownStream[i];
 
     //UpStream
     Dil_xN_UpStream[i] = AvgDil_xN_UpStream[i]/AvgDil_xN_count_UpStream[i];
@@ -1208,6 +1209,7 @@ int main(int argc, char **argv){
     Dil_xF_UpStream[i] = AvgDil_xF_UpStream[i]/AvgDil_xF_count_UpStream[i];
     Dil_pT_UpStream[i] = AvgDil_pT_UpStream[i]/AvgDil_pT_count_UpStream[i];
     Dil_M_UpStream[i] = AvgDil_M_UpStream[i]/AvgDil_M_count_UpStream[i];
+    Dil_rad_UpStream[i] = AvgDil_rad_UpStream[i]/AvgDil_rad_count_UpStream[i];
 
     //UpStream Polarized Up
     Dil_xN_UpStream_Up[i] = 
@@ -1220,6 +1222,10 @@ int main(int argc, char **argv){
       AvgDil_pT_UpStream_Up[i]/AvgDil_pT_count_UpStream_Up[i];
     Dil_M_UpStream_Up[i] = 
       AvgDil_M_UpStream_Up[i]/AvgDil_M_count_UpStream_Up[i];
+    Dil_rad_UpStream_Up[i] = 
+      AvgDil_rad_UpStream_Up[i]/AvgDil_rad_count_UpStream_Up[i];
+    Dil_vxZ_upstream_Up[i] = 
+      AvgDil_vxZ_upstream_Up[i]/AvgDil_vxZ_count_UpStream_Up[i];
 
     //UpStream Polarized Down
     Dil_xN_UpStream_Down[i] = 
@@ -1232,6 +1238,10 @@ int main(int argc, char **argv){
       AvgDil_pT_UpStream_Down[i]/AvgDil_pT_count_UpStream_Down[i];
     Dil_M_UpStream_Down[i] =
       AvgDil_M_UpStream_Down[i]/AvgDil_M_count_UpStream_Down[i];
+    Dil_rad_UpStream_Down[i] = 
+      AvgDil_rad_UpStream_Down[i]/AvgDil_rad_count_UpStream_Down[i];
+    Dil_vxZ_upstream_Down[i] = 
+      AvgDil_vxZ_upstream_Down[i]/AvgDil_vxZ_count_UpStream_Down[i];
 
     //DownStream
     Dil_xN_DownStream[i] =AvgDil_xN_DownStream[i]/AvgDil_xN_count_DownStream[i];
@@ -1240,6 +1250,8 @@ int main(int argc, char **argv){
     Dil_xF_DownStream[i] =AvgDil_xF_DownStream[i]/AvgDil_xF_count_DownStream[i];
     Dil_pT_DownStream[i] =AvgDil_pT_DownStream[i]/AvgDil_pT_count_DownStream[i];
     Dil_M_DownStream[i] = AvgDil_M_DownStream[i]/AvgDil_M_count_DownStream[i];
+    Dil_rad_DownStream[i] =
+      AvgDil_rad_DownStream[i]/AvgDil_rad_count_DownStream[i];
 
     //DownStream Polarized Up
     Dil_xN_DownStream_Up[i] =
@@ -1252,6 +1264,10 @@ int main(int argc, char **argv){
       AvgDil_pT_DownStream_Up[i]/AvgDil_pT_count_DownStream_Up[i];
     Dil_M_DownStream_Up[i] =
       AvgDil_M_DownStream_Up[i]/AvgDil_M_count_DownStream_Up[i];
+    Dil_rad_DownStream_Up[i] = 
+      AvgDil_rad_DownStream_Up[i]/AvgDil_rad_count_DownStream_Up[i];
+    Dil_vxZ_downstream_Up[i] = 
+      AvgDil_vxZ_downstream_Up[i]/AvgDil_vxZ_count_DownStream_Up[i];
 	
     //DownStream Polarized Down
     Dil_xN_DownStream_Down[i] =
@@ -1264,6 +1280,10 @@ int main(int argc, char **argv){
       AvgDil_pT_DownStream_Down[i]/AvgDil_pT_count_DownStream_Down[i];
     Dil_M_DownStream_Down[i] =
       AvgDil_M_DownStream_Down[i]/AvgDil_M_count_DownStream_Down[i];
+    Dil_rad_DownStream_Down[i] = 
+      AvgDil_rad_DownStream_Down[i]/AvgDil_rad_count_DownStream_Down[i];
+    Dil_vxZ_downstream_Down[i] = 
+      AvgDil_vxZ_downstream_Down[i]/AvgDil_vxZ_count_DownStream_Down[i];
 
 
     //Polarization
@@ -1273,6 +1293,10 @@ int main(int argc, char **argv){
     Pol_xF[i] = AvgPol_xF[i]/AvgPol_xF_count[i];
     Pol_pT[i] = AvgPol_pT[i]/AvgPol_pT_count[i];
     Pol_M[i] = AvgPol_M[i]/AvgPol_M_count[i];
+    Pol_rad[i] = AvgPol_rad[i]/AvgPol_rad_count[i];
+    Pol_vxZ_upstream[i] = AvgPol_vxZ_upstream[i]/AvgPol_vxZ_count_UpStream[i];
+    Pol_vxZ_downstream[i] =
+      AvgPol_vxZ_downstream[i]/AvgPol_vxZ_count_DownStream[i];
 
     //UpStream////////////
     Pol_xN_UpStream[i] = AvgPol_xN_UpStream[i]/AvgPol_xN_count_UpStream[i];
@@ -1280,6 +1304,7 @@ int main(int argc, char **argv){
     Pol_xF_UpStream[i] = AvgPol_xF_UpStream[i]/AvgPol_xF_count_UpStream[i];
     Pol_pT_UpStream[i] = AvgPol_pT_UpStream[i]/AvgPol_pT_count_UpStream[i];
     Pol_M_UpStream[i] = AvgPol_M_UpStream[i]/AvgPol_M_count_UpStream[i];
+    Pol_rad_UpStream[i] = AvgPol_rad_UpStream[i]/AvgPol_rad_count_UpStream[i];
 
     //UpStream Polarized Up
     Pol_xN_UpStream_Up[i] = 
@@ -1292,6 +1317,10 @@ int main(int argc, char **argv){
       AvgPol_pT_UpStream_Up[i]/AvgPol_pT_count_UpStream_Up[i];
     Pol_M_UpStream_Up[i] = 
       AvgPol_M_UpStream_Up[i]/AvgPol_M_count_UpStream_Up[i];
+    Pol_rad_UpStream_Up[i] = 
+      AvgPol_rad_UpStream_Up[i]/AvgPol_rad_count_UpStream_Up[i];
+    Pol_vxZ_upstream_Up[i] = 
+      AvgPol_vxZ_upstream_Up[i]/AvgPol_vxZ_count_UpStream_Up[i];
 
     //UpStream Polarized Down
     Pol_xN_UpStream_Down[i] = 
@@ -1304,6 +1333,10 @@ int main(int argc, char **argv){
       AvgPol_pT_UpStream_Down[i]/AvgPol_pT_count_UpStream_Down[i];
     Pol_M_UpStream_Down[i] =
       AvgPol_M_UpStream_Down[i]/AvgPol_M_count_UpStream_Down[i];
+    Pol_rad_UpStream_Down[i] = 
+      AvgPol_rad_UpStream_Down[i]/AvgPol_rad_count_UpStream_Down[i];
+    Pol_vxZ_upstream_Down[i] = 
+      AvgPol_vxZ_upstream_Down[i]/AvgPol_vxZ_count_UpStream_Down[i];
 	
     //DownStream////////////
     Pol_xN_DownStream[i] =AvgPol_xN_DownStream[i]/AvgPol_xN_count_DownStream[i];
@@ -1312,6 +1345,8 @@ int main(int argc, char **argv){
     Pol_xF_DownStream[i] =AvgPol_xF_DownStream[i]/AvgPol_xF_count_DownStream[i];
     Pol_pT_DownStream[i] =AvgPol_pT_DownStream[i]/AvgPol_pT_count_DownStream[i];
     Pol_M_DownStream[i] = AvgPol_M_DownStream[i]/AvgPol_M_count_DownStream[i];
+    Pol_rad_DownStream[i] =
+      AvgPol_rad_DownStream[i]/AvgPol_rad_count_DownStream[i];
 
     //DownStream Polarized Up
     Pol_xN_DownStream_Up[i] =
@@ -1324,6 +1359,11 @@ int main(int argc, char **argv){
       AvgPol_pT_DownStream_Up[i]/AvgPol_pT_count_DownStream_Up[i];
     Pol_M_DownStream_Up[i] =
       AvgPol_M_DownStream_Up[i]/AvgPol_M_count_DownStream_Up[i];
+    Pol_rad_DownStream_Up[i] = 
+      AvgPol_rad_DownStream_Up[i]/AvgPol_rad_count_DownStream_Up[i];
+    Pol_vxZ_downstream_Up[i] = 
+      AvgPol_vxZ_downstream_Up[i]/AvgPol_vxZ_count_DownStream_Up[i];
+    
 	
     //DownStream Polarized Down
     Pol_xN_DownStream_Down[i] =
@@ -1336,6 +1376,10 @@ int main(int argc, char **argv){
       AvgPol_pT_DownStream_Down[i]/AvgPol_pT_count_DownStream_Down[i];
     Pol_M_DownStream_Down[i] =
       AvgPol_M_DownStream_Down[i]/AvgPol_M_count_DownStream_Down[i];
+    Pol_rad_DownStream_Down[i] = 
+      AvgPol_rad_DownStream_Down[i]/AvgPol_rad_count_DownStream_Down[i];
+    Pol_vxZ_downstream_Down[i] = 
+      AvgPol_vxZ_downstream_Down[i]/AvgPol_vxZ_count_DownStream_Down[i];
 	
   }//Dilution and polariztion setup loop
 
@@ -1368,57 +1412,74 @@ int main(int argc, char **argv){
     tv_xF_bounds.Write("tv_xF_bounds");
     tv_pT_bounds.Write("tv_pT_bounds");
     tv_M_bounds.Write("tv_M_bounds");
+    tv_rad_bounds.Write("tv_rad_bounds");
+    tv_vxZ_upstream_bounds.Write("tv_vxZ_upstream_bounds");
+    tv_vxZ_downstream_bounds.Write("tv_vxZ_downstream_bounds");
 
     tv_xN_xval.Write("tv_xN_xval");
     tv_xPi_xval.Write("tv_xPi_xval");
     tv_xF_xval.Write("tv_xF_xval");
     tv_pT_xval.Write("tv_pT_xval");
     tv_M_xval.Write("tv_M_xval");
+    tv_rad_xval.Write("tv_rad_xval");
+    tv_vxZ_upstream_xval.Write("tv_vxZ_upstream_xval");
+    tv_vxZ_downstream_xval.Write("tv_vxZ_downstream_xval");
 
-    Dil_xN_test.Write("Dil_xN_test");
-	
     Dil_int.Write("Dil_int");
     Dil_xN.Write("Dil_xN");
     Dil_xPi.Write("Dil_xPi");
     Dil_xF.Write("Dil_xF");
     Dil_pT.Write("Dil_pT");
     Dil_M.Write("Dil_M");
-
+    Dil_rad.Write("Dil_rad");
+    Dil_vxZ_upstream.Write("Dil_vxZ_upstream");
+    Dil_vxZ_downstream.Write("Dil_vxZ_downstream");
+    
     Dil_xN_UpStream.Write("Dil_xN_UpStream");
     Dil_xPi_UpStream.Write("Dil_xPi_UpStream");
     Dil_xF_UpStream.Write("Dil_xF_UpStream");
     Dil_pT_UpStream.Write("Dil_pT_UpStream");
     Dil_M_UpStream.Write("Dil_M_UpStream");
+    Dil_rad_UpStream.Write("Dil_rad_UpStream");
 
     Dil_xN_UpStream_Up.Write("Dil_xN_UpStream_Up");
     Dil_xPi_UpStream_Up.Write("Dil_xPi_UpStream_Up");
     Dil_xF_UpStream_Up.Write("Dil_xF_UpStream_Up");
     Dil_pT_UpStream_Up.Write("Dil_pT_UpStream_Up");
     Dil_M_UpStream_Up.Write("Dil_M_UpStream_Up");
+    Dil_rad_UpStream_Up.Write("Dil_rad_UpStream_Up");
+    Dil_vxZ_upstream_Up.Write("Dil_vxZ_upstream_Up");
 	
     Dil_xN_UpStream_Down.Write("Dil_xN_UpStream_Down");
     Dil_xPi_UpStream_Down.Write("Dil_xPi_UpStream_Down");
     Dil_xF_UpStream_Down.Write("Dil_xF_UpStream_Down");
     Dil_pT_UpStream_Down.Write("Dil_pT_UpStream_Down");
     Dil_M_UpStream_Down.Write("Dil_M_UpStream_Down");
+    Dil_rad_UpStream_Down.Write("Dil_rad_UpStream_Down");
+    Dil_vxZ_upstream_Down.Write("Dil_vxZ_upstream_Down");
 
     Dil_xN_DownStream.Write("Dil_xN_DownStream");
     Dil_xPi_DownStream.Write("Dil_xPi_DownStream");
     Dil_xF_DownStream.Write("Dil_xF_DownStream");
     Dil_pT_DownStream.Write("Dil_pT_DownStream");
     Dil_M_DownStream.Write("Dil_M_DownStream");
+    Dil_rad_DownStream.Write("Dil_rad_DownStream");
 
     Dil_xN_DownStream_Up.Write("Dil_xN_DownStream_Up");
     Dil_xPi_DownStream_Up.Write("Dil_xPi_DownStream_Up");
     Dil_xF_DownStream_Up.Write("Dil_xF_DownStream_Up");
     Dil_pT_DownStream_Up.Write("Dil_pT_DownStream_Up");
     Dil_M_DownStream_Up.Write("Dil_M_DownStream_Up");
+    Dil_rad_DownStream_Up.Write("Dil_rad_DownStream_Up");
+    Dil_vxZ_downstream_Up.Write("Dil_vxZ_downstream_Up");
 	
     Dil_xN_DownStream_Down.Write("Dil_xN_DownStream_Down");
     Dil_xPi_DownStream_Down.Write("Dil_xPi_DownStream_Down");
     Dil_xF_DownStream_Down.Write("Dil_xF_DownStream_Down");
     Dil_pT_DownStream_Down.Write("Dil_pT_DownStream_Down");
     Dil_M_DownStream_Down.Write("Dil_M_DownStream_Down");
+    Dil_rad_DownStream_Down.Write("Dil_rad_DownStream_Down");
+    Dil_vxZ_downstream_Down.Write("Dil_vxZ_downstream_Down");
 
     Pol_int.Write("Pol_int");
     Pol_xN.Write("Pol_xN");
@@ -1426,42 +1487,55 @@ int main(int argc, char **argv){
     Pol_xF.Write("Pol_xF");
     Pol_pT.Write("Pol_pT");
     Pol_M.Write("Pol_M");
+    Pol_rad.Write("Pol_rad");
+    Pol_vxZ_upstream.Write("Pol_vxZ_upstream");
+    Pol_vxZ_downstream.Write("Pol_vxZ_downstream");
 
     Pol_xN_UpStream.Write("Pol_xN_UpStream");
     Pol_xPi_UpStream.Write("Pol_xPi_UpStream");
     Pol_xF_UpStream.Write("Pol_xF_UpStream");
     Pol_pT_UpStream.Write("Pol_pT_UpStream");
     Pol_M_UpStream.Write("Pol_M_UpStream");
+    Pol_rad_UpStream.Write("Pol_rad_UpStream");
 
     Pol_xN_UpStream_Up.Write("Pol_xN_UpStream_Up");
     Pol_xPi_UpStream_Up.Write("Pol_xPi_UpStream_Up");
     Pol_xF_UpStream_Up.Write("Pol_xF_UpStream_Up");
     Pol_pT_UpStream_Up.Write("Pol_pT_UpStream_Up");
     Pol_M_UpStream_Up.Write("Pol_M_UpStream_Up");
+    Pol_rad_UpStream_Up.Write("Pol_rad_UpStream_Up");
+    Pol_vxZ_upstream_Up.Write("Pol_vxZ_upstream_Up");    
 	
     Pol_xN_UpStream_Down.Write("Pol_xN_UpStream_Down");
     Pol_xPi_UpStream_Down.Write("Pol_xPi_UpStream_Down");
     Pol_xF_UpStream_Down.Write("Pol_xF_UpStream_Down");
     Pol_pT_UpStream_Down.Write("Pol_pT_UpStream_Down");
     Pol_M_UpStream_Down.Write("Pol_M_UpStream_Down");
+    Pol_rad_UpStream_Down.Write("Pol_rad_UpStream_Down");
+    Pol_vxZ_upstream_Down.Write("Pol_vxZ_upstream_Down");    
 
     Pol_xN_DownStream.Write("Pol_xN_DownStream");
     Pol_xPi_DownStream.Write("Pol_xPi_DownStream");
     Pol_xF_DownStream.Write("Pol_xF_DownStream");
     Pol_pT_DownStream.Write("Pol_pT_DownStream");
     Pol_M_DownStream.Write("Pol_M_DownStream");
+    Pol_rad_DownStream.Write("Pol_rad_DownStream");
 
     Pol_xN_DownStream_Up.Write("Pol_xN_DownStream_Up");
     Pol_xPi_DownStream_Up.Write("Pol_xPi_DownStream_Up");
     Pol_xF_DownStream_Up.Write("Pol_xF_DownStream_Up");
     Pol_pT_DownStream_Up.Write("Pol_pT_DownStream_Up");
     Pol_M_DownStream_Up.Write("Pol_M_DownStream_Up");
+    Pol_rad_DownStream_Up.Write("Pol_rad_DownStream_Up");
+    Pol_vxZ_downstream_Up.Write("Pol_vxZ_downstream_Up");    
 	
     Pol_xN_DownStream_Down.Write("Pol_xN_DownStream_Down");
     Pol_xPi_DownStream_Down.Write("Pol_xPi_DownStream_Down");
     Pol_xF_DownStream_Down.Write("Pol_xF_DownStream_Down");
     Pol_pT_DownStream_Down.Write("Pol_pT_DownStream_Down");
     Pol_M_DownStream_Down.Write("Pol_M_DownStream_Down");
+    Pol_rad_DownStream_Down.Write("Pol_rad_DownStream_Down");
+    Pol_vxZ_downstream_Down.Write("Pol_vxZ_downstream_Down");    
 
     TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
     TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
