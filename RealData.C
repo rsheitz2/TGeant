@@ -130,8 +130,8 @@ int main(int argc, char **argv){
   vxZ_upstream_bounds.push_back(-294.5);
   vxZ_downstream_bounds.push_back(-219.5);
   
-  //M_bounds.push_back(2.5);//JPsi mass
-  M_bounds.push_back(4.3);//High mass
+  M_bounds.push_back(2.5);//JPsi mass
+  //M_bounds.push_back(4.3);//High mass
   if (binFlag) {
     string line;
     TString dy_type = "";
@@ -252,10 +252,10 @@ int main(int argc, char **argv){
     vxZ_downstream_bounds.push_back(-199.956);
     vxZ_downstream_bounds.push_back(-183.598);
 
-    //M_bounds.push_back(2.85);//JPsi mass
-    //M_bounds.push_back(3.12);//JPsi mass
-    M_bounds.push_back(4.75);//High mass
-    M_bounds.push_back(5.5);//High mass
+    M_bounds.push_back(2.85);//JPsi mass
+    M_bounds.push_back(3.12);//JPsi mass
+    //M_bounds.push_back(4.75);//High mass
+    //M_bounds.push_back(5.5);//High mass
   }
   xN_bounds.push_back(1.0);
   xPi_bounds.push_back(1.0);
@@ -265,14 +265,18 @@ int main(int argc, char **argv){
   vxZ_upstream_bounds.push_back(-239.3);
   vxZ_downstream_bounds.push_back(-164.3);
     
-  //M_bounds.push_back(4.3);//JPsi mass
-  M_bounds.push_back(8.5);//High mass
+  M_bounds.push_back(4.3);//JPsi mass
+  //M_bounds.push_back(8.5);//High mass
   cout << " " << endl;
   cout << "Warning!!!!!!!" << endl;
-  //cout << "JPsi Mass" << endl;
-  cout << "High Mass" << endl;
+  cout << "JPsi Mass" << endl;
+  //cout << "High Mass" << endl;
   cout << "!!!!!!!!!!!!!!!" << endl;
   cout << " " << endl;
+  if (M_bounds.at(0) > M_bounds.at(1) || M_bounds.back() < M_xval.front() ){
+	  cout << "Mass Range not setup correct" << endl;
+    exit(EXIT_FAILURE);
+  }
   
   if (!fflag) {
     cout << "Please enter an input file" << endl;
