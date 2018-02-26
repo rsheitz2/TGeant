@@ -96,11 +96,17 @@ int main(int argc, char **argv){
   vector<Double_t> xF_bounds, xF_xval; 
   vector<Double_t> pT_bounds, pT_xval;
   vector<Double_t> M_bounds, M_xval;
+  vector<Double_t> rad_bounds, rad_xval;
+  vector<Double_t> vxZ_upstream_bounds, vxZ_upstream_xval;
+  vector<Double_t> vxZ_downstream_bounds, vxZ_downstream_xval;
   xN_bounds.push_back(0.0);
   xPi_bounds.push_back(0.0);
   xF_bounds.push_back(-1.0);
   pT_bounds.push_back(0.4);
   M_bounds.push_back(4.3);
+  rad_bounds.push_back(0.0);
+  vxZ_upstream_bounds.push_back(-294.5);
+  vxZ_downstream_bounds.push_back(-219.5);
   if (binFlag) {
     string line;
     TString dy_type = "";
@@ -137,14 +143,38 @@ int main(int argc, char **argv){
 	  xval = 0;
 	}			
       }
-      else if (line[1] == 'a') {
+      else if (line[2] == 's') {
 	if (dy_type == "M") xval = 1;
 	else {
 	  dy_type = "M";
 	  xval = 0;
 	}			
       }
-      if (line[0] == 'x' || line[0] == 'p' || line[0] == 'm') continue;
+      else if (line[0] == 'r') {
+	if (dy_type == "rad") xval = 1;
+	else {
+	  dy_type = "rad";
+	  xval = 0;
+	}			
+      }
+      else if (line[4] == 'u') {
+	if (dy_type == "vxZ_upstream") xval = 1;
+	else {
+	  dy_type = "vxZ_upstream";
+	  xval = 0;
+	}			
+      }
+      else if (line[4] == 'd') {
+	if (dy_type == "vxZ_downstream") xval = 1;
+	else {
+	  dy_type = "vxZ_downstream";
+	  xval = 0;
+	}			
+      }
+
+      //Don't read title lines
+      if (line[0] == 'x' || line[0] == 'p' || line[1] == 'a' || line[0] == 'v'){
+	continue;}
 
       if (dy_type == "xN"){
 	if (xval == 0) xN_bounds.push_back(atof(line.c_str() ) );
@@ -166,6 +196,18 @@ int main(int argc, char **argv){
 	if (xval == 0) M_bounds.push_back(atof(line.c_str() ) );
 	else M_xval.push_back(atof(line.c_str() ) );
       }
+      else if (dy_type == "rad"){
+	if (xval == 0) rad_bounds.push_back(atof(line.c_str() ) );
+	else rad_xval.push_back(atof(line.c_str() ) );
+      }
+      else if (dy_type == "vxZ_upstream"){
+	if (xval == 0) vxZ_upstream_bounds.push_back(atof(line.c_str() ) );
+	else vxZ_upstream_xval.push_back(atof(line.c_str() ) );
+      }
+      else if (dy_type == "vxZ_downstream"){
+	if (xval == 0) vxZ_downstream_bounds.push_back(atof(line.c_str() ) );
+	else vxZ_downstream_xval.push_back(atof(line.c_str() ) );
+      }
     }//end file loop
   }//end binFlag
   else {//HM DY binning
@@ -177,6 +219,12 @@ int main(int argc, char **argv){
     xF_bounds.push_back(0.41);
     pT_bounds.push_back(0.9);
     pT_bounds.push_back(1.4);
+    rad_bounds.push_back(0.719511);
+    rad_bounds.push_back(1.14036);
+    vxZ_upstream_bounds.push_back(-275.021);
+    vxZ_upstream_bounds.push_back(-258.531);
+    vxZ_downstream_bounds.push_back(-199.956);
+    vxZ_downstream_bounds.push_back(-183.598);
 
     M_bounds.push_back(4.75);
     M_bounds.push_back(5.50);
@@ -185,6 +233,10 @@ int main(int argc, char **argv){
   xPi_bounds.push_back(1.0);
   xF_bounds.push_back(1.0);
   pT_bounds.push_back(5.0);
+  rad_bounds.push_back(1.9);
+  vxZ_upstream_bounds.push_back(-239.3);
+  vxZ_downstream_bounds.push_back(-164.3);
+  
   M_bounds.push_back(8.5);
   cout << " " << endl;
   cout << "Warning!!!!!!!" << endl;
@@ -215,12 +267,18 @@ int main(int argc, char **argv){
   TVectorD tv_xF_bounds(nBounds);
   TVectorD tv_pT_bounds(nBounds);
   TVectorD tv_M_bounds(nBounds);
+  TVectorD tv_rad_bounds(nBounds);
+  TVectorD tv_vxZ_upstream_bounds(nBounds);
+  TVectorD tv_vxZ_downstream_bounds(nBounds);
   for (UInt_t i=0; i<xN_bounds.size(); i++) {
     tv_xN_bounds[i] = xN_bounds.at(i);
     tv_xPi_bounds[i] = xPi_bounds.at(i);
     tv_xF_bounds[i] = xF_bounds.at(i);
     tv_pT_bounds[i] = pT_bounds.at(i);
     tv_M_bounds[i] = M_bounds.at(i);
+    tv_rad_bounds[i] = rad_bounds.at(i);
+    tv_vxZ_upstream_bounds[i] = vxZ_upstream_bounds.at(i);
+    tv_vxZ_downstream_bounds[i] = vxZ_downstream_bounds.at(i);
   }
   Int_t nBins = xN_xval.size();
   if (nBins == 0){
@@ -234,12 +292,18 @@ int main(int argc, char **argv){
   TVectorD tv_xF_xval(nBins);
   TVectorD tv_pT_xval(nBins);
   TVectorD tv_M_xval(nBins);
+  TVectorD tv_rad_xval(nBins);
+  TVectorD tv_vxZ_upstream_xval(nBins);
+  TVectorD tv_vxZ_downstream_xval(nBins);
   for (UInt_t i=0; i<xN_xval.size(); i++) {
     tv_xN_xval[i] = xN_xval.at(i);
     tv_xPi_xval[i] = xPi_xval.at(i);
     tv_xF_xval[i] = xF_xval.at(i);
     tv_pT_xval[i] = pT_xval.at(i);
     tv_M_xval[i] = M_xval.at(i);
+    tv_rad_xval[i] = rad_xval.at(i);
+    tv_vxZ_upstream_xval[i] = vxZ_upstream_xval.at(i);
+    tv_vxZ_downstream_xval[i] = vxZ_downstream_xval.at(i);
   }
   
 
