@@ -30,6 +30,8 @@ int main(int argc, char **argv){
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
+  ///////////////
+  // {{{
   Int_t uflag=0, wflag=0, Qflag=0, fflag=0, binFlag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", binFile="";
@@ -257,8 +259,12 @@ int main(int argc, char **argv){
     f1->Close();
   }
   T1->Add(fname);
+  // }}}
   
+
   //Internal variables and binning
+  ////////////////
+  // {{{
   Double_t M_proton = 0.938272;
   Int_t nBounds = xN_bounds.size();
 
@@ -654,7 +660,9 @@ int main(int argc, char **argv){
   tree->Branch("HG02_y2_p1x", &HG02_y2_p1x, "HG02_y2_p1x/D");
   tree->Branch("HG02_y2_p1y", &HG02_y2_p1y, "HG02_y2_p1y/D");
   tree->Branch("HG02_y2_p2x", &HG02_y2_p2x, "HG02_y2_p2x/D");
-  tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");  
+  tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");
+  // }}}
+
 
   Int_t tree_entries = T1->GetEntries();
   //Int_t tree_entries = 10000; cout << "Debugging" << endl;//Debug
@@ -753,6 +761,8 @@ int main(int argc, char **argv){
     }
 
     //Setup Vectors in different coordinate systems
+    ///////////////
+    // {{{
     //Compass frame:
     TLorentzVector lv_beam(beam[0], beam[1], beam[2], beam[3]);
     TLorentzVector lv_target(0, 0, 0, target[0]);
@@ -816,6 +826,8 @@ int main(int argc, char **argv){
     boost_CS(lv_Gen_beam_CS, lv_Gen_target_CS, lv_Gen_Spin_CS,
 	     lv_Gen_Spin_simple_CS, lv_Gen_virtualPhoton_CS, lv_Gen_muPlus_CS,
 	     lv_Gen_muMinus_CS);
+    // }}}
+
 
     Double_t PhiS_lab = lv_Spin.Phi() - lv_virtualPhoton.Phi();
     if(PhiS_lab > TMath::Pi()) PhiS_lab = -2*TMath::Pi() + PhiS_lab;
@@ -845,6 +857,9 @@ int main(int argc, char **argv){
     hCuts->GetXaxis()->SetBinLabel(bin_index, cutNames[i]);
   }
 
+  //Write Output
+  ////////////////
+  // {{{
   if (!wflag && !Qflag) cout << "No file output" << endl;
   else{ 
     if (wflag) outFile += "RealData.root";
@@ -906,6 +921,8 @@ int main(int argc, char **argv){
     cout << myFile->GetName() << " was written" << endl;
     myFile->Close();
   }
+  // }}}
+
 
   theApp.Run();//Needed to make root graphics work on C++
 }//main
