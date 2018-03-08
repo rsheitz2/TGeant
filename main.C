@@ -594,6 +594,7 @@ int main(int argc, char **argv){
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
   Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS;
   Double_t Gen_PhiS, Gen_PhiS_simple, Gen_Phi_CS, Gen_Theta_CS;
+  Double_t gen_vPhoton_X, gen_vPhoton_Y, gen_vPhoton_Z, gen_vPhoton_E;
   Int_t targetPosition;
   Double_t Spin;
   tree->Branch("PhiS", &PhiS, "PhiS/D");
@@ -605,6 +606,14 @@ int main(int argc, char **argv){
   tree->Branch("Gen_Phi_CS", &Gen_Phi_CS, "Gen_Phi_CS/D");
   tree->Branch("Gen_Theta_CS", &Gen_Theta_CS, "Gen_Theta_CS/D");
   tree->Branch("trigMask", &trigMask, "trigMask/I");
+  tree->Branch("vPhoton_X", &vPhoton_X, "vPhoton_X/D");
+  tree->Branch("vPhoton_Y", &vPhoton_Y, "vPhoton_Y/D");
+  tree->Branch("vPhoton_Z", &vPhoton_Z, "vPhoton_Z/D");
+  tree->Branch("vPhoton_E", &vPhoton_E, "vPhoton_E/D");
+  tree->Branch("gen_vPhoton_X", &gen_vPhoton_X, "gen_vPhoton_X/D");
+  tree->Branch("gen_vPhoton_Y", &gen_vPhoton_Y, "gen_vPhoton_Y/D");
+  tree->Branch("gen_vPhoton_Z", &gen_vPhoton_Z, "gen_vPhoton_Z/D");
+  tree->Branch("gen_vPhoton_E", &gen_vPhoton_E, "gen_vPhoton_E/D");
   tree->Branch("x_beam", &x_beam, "x_beam/D");
   tree->Branch("x_target", &x_target, "x_target/D");
   tree->Branch("x_feynman", &x_feynman, "x_feynman/D");
@@ -780,6 +789,10 @@ int main(int argc, char **argv){
     TLorentzVector lv_Gen_muMinus(Gen_muMinus[0], Gen_muMinus[1],
 				  Gen_muMinus[2], Gen_muMinus[3]);
     TLorentzVector lv_Gen_virtualPhoton = lv_Gen_muPlus + lv_Gen_muMinus;
+    gen_vPhoton_X = lv_Gen_virtualPhoton.X();
+    gen_vPhoton_Y = lv_Gen_virtualPhoton.Y();
+    gen_vPhoton_Z = lv_Gen_virtualPhoton.Z();
+    gen_vPhoton_E = lv_Gen_virtualPhoton.E();
 
     //Target frame:
     TLorentzVector lv_beam_TF(lv_beam);
