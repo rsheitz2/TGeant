@@ -598,6 +598,7 @@ int main(int argc, char **argv){
   tree->Branch("Gen_PhiS_simple", &Gen_PhiS_simple, "Gen_PhiS_simple/D");
   tree->Branch("Gen_Phi_CS", &Gen_Phi_CS, "Gen_Phi_CS/D");
   tree->Branch("Gen_Theta_CS", &Gen_Theta_CS, "Gen_Theta_CS/D");
+  tree->Branch("trigMask", &trigMask, "trigMask/I");
   tree->Branch("x_beam", &x_beam, "x_beam/D");
   tree->Branch("x_target", &x_target, "x_target/D");
   tree->Branch("x_feynman", &x_feynman, "x_feynman/D");
@@ -617,6 +618,10 @@ int main(int argc, char **argv){
   tree->Branch("vx_z", &vx_z, "vx_z/D");
   tree->Branch("vx_x", &vx_x, "vx_x/D");
   tree->Branch("vx_y", &vx_y, "vx_y/D");
+  tree->Branch("vx_zVar", &vx_zVar, "vx_zVar/D");
+  tree->Branch("vx_xVar", &vx_xVar, "vx_xVar/D");
+  tree->Branch("vx_yVar", &vx_yVar, "vx_yVar/D");
+  tree->Branch("vOpenAngle", &vOpenAngle, "vOpenAngle/D");
   tree->Branch("theta_MCtr1", &theta_MCtr1, "theta_MCtr1/D");
   tree->Branch("phi_MCtr1", &phi_MCtr1, "phi_MCtr1/D");
   tree->Branch("Pinv_MCtr1", &Pinv_MCtr1, "Pinv_MCtr1/D");
@@ -655,8 +660,20 @@ int main(int argc, char **argv){
   //Int_t tree_entries = 10000; cout << "Debugging" << endl;//Debug
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
+  Bool_t first = true;
   for (Int_t i=0; i<tree_entries; i++){
     T1->GetEntry(i, 0);
+
+	//Settings
+	if (first || i==tree_entries-1){
+		cout << " " << endl;
+		cout << "Setup!!!!!!!!!" << endl;
+		cout << "Normal DY cuts" << endl;
+		cout << "vMCtrInZ < 0 only" << endl;
+		cout << " " << endl;
+
+		first = false;
+	}
     
     //Cuts
     cut_bin = 1;
@@ -706,6 +723,11 @@ int main(int argc, char **argv){
     TLorentzVector lv_photon_main(vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E);
     TLorentzVector lv_beam_main(beam_X, beam_Y, beam_Z, beam_E);
 
+	if (vMCtrIn_Z < 0) vMCtrIn_Z = -vMCtrIn_Z;
+	else continue;//Don't know what positive pInZ stuff is
+	if (vMCtr1_X < -200 || vMCtr2_X < -200 || vMCtrIn_X < -200) continue;
+	if (vMCtr1_Y < -200 || vMCtr2_Y < -200 || vMCtrIn_Y < -200) continue;
+	if (vMCtr1_Z < -200 || vMCtr2_Z < -200 || vMCtrIn_Z < -200) continue;
     Double_t Gen_beam[] = {vMCtrIn_X, vMCtrIn_Y, vMCtrIn_Z, vMCtrIn_E};
     Double_t Gen_muPlus[] = {vMCtr1_X, vMCtr1_Y, vMCtr1_Z, vMCtr1_E};
     Double_t Gen_muMinus[] = {vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E};
@@ -735,7 +757,7 @@ int main(int argc, char **argv){
     TLorentzVector lv_beam(beam[0], beam[1], beam[2], beam[3]);
     TLorentzVector lv_target(0, 0, 0, target[0]);
     TLorentzVector lv_Spin(0, Spin, 0, 0);
-    TLorentzVector lv_Spin_simple(0, 1, 0, 0);
+    TLorentzVector lv_Spin_simple(0, 1.0, 0, 0);
     TLorentzVector lv_muPlus(muPlus[0], muPlus[1], muPlus[2], muPlus[3]);
     TLorentzVector lv_muMinus(muMinus[0], muMinus[1], muMinus[2], muMinus[3]);
     TLorentzVector lv_virtualPhoton(virtualPhoton[0], virtualPhoton[1],

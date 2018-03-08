@@ -725,6 +725,8 @@ int main(int argc, char **argv){
   tree->Branch("PhiS_simple", &PhiS_simple, "PhiS_simple/D");
   tree->Branch("Phi_CS", &Phi_CS, "Phi_CS/D");
   tree->Branch("Theta_CS", &Theta_CS, "Theta_CS/D");
+  tree->Branch("MasterTrigMask", &MasterTrigMask, "MasterTrigMask/I");
+  tree->Branch("trigMask", &trigMask, "trigMask/I");
   tree->Branch("x_beam", &x_beam, "x_beam/D");
   tree->Branch("x_target", &x_target, "x_target/D");
   tree->Branch("x_feynman", &x_feynman, "x_feynman/D");
@@ -746,6 +748,10 @@ int main(int argc, char **argv){
   tree->Branch("vx_z", &vx_z, "vx_z/D");
   tree->Branch("vx_x", &vx_x, "vx_x/D");
   tree->Branch("vx_y", &vx_y, "vx_y/D");
+  tree->Branch("vx_zVar", &vx_zVar, "vx_zVar/D");
+  tree->Branch("vx_xVar", &vx_xVar, "vx_xVar/D");
+  tree->Branch("vx_yVar", &vx_yVar, "vx_yVar/D");
+  tree->Branch("vOpenAngle", &vOpenAngle, "vOpenAngle/D");
   tree->Branch("SM1_p1x", &SM1_p1x, "SM1_p1x/D");
   tree->Branch("SM1_p1y", &SM1_p1y, "SM1_p1y/D");
   tree->Branch("SM1_p2x", &SM1_p2x, "SM1_p2x/D");
