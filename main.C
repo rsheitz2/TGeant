@@ -561,7 +561,8 @@ int main(int argc, char **argv){
 
   
   //Cut histograms
-  const Int_t nCutHist = 11;//Number of impact cut hist
+  const Int_t nCutHist = 12;//Number of impact cut hist
+  //const Int_t nMCCuts = 5//src/setup.h
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
 
@@ -569,9 +570,10 @@ int main(int argc, char **argv){
   TH1D *hCut_MuPTheta[nMCCuts],*hCut_MuPPhi[nMCCuts],*hCut_MuPqP[nMCCuts];
   TH1D *hCut_MuMTheta[nMCCuts],*hCut_MuMPhi[nMCCuts],*hCut_MuMqP[nMCCuts];
   TH1D *hCut_xN[nMCCuts], *hCut_xPi[nMCCuts], *hCut_xF[nMCCuts];
-  TH1D *hCut_qT[nMCCuts];
+  TH1D *hCut_qT[nMCCuts], *hCut_PhiPhoton[nMCCuts];
+  TH1D *hCut_PhiS[nMCCuts], *hCut_PhiS_simple[nMCCuts];
 
-  TH1D *hImpactCuts[nCutHist][nMCCuts];
+  TH1D *hImpactCuts[nCutHist+2][nMCCuts];
 
   Int_t ih = 0;
   HistArraySetupMC(hCut_VxZ, hImpactCuts, 500, -500, 100, ih, "VxZ"); ih++;
@@ -589,6 +591,9 @@ int main(int argc, char **argv){
   HistArraySetupMC(hCut_xPi, hImpactCuts, 100, 0, 1, ih, "xPi"); ih++;
   HistArraySetupMC(hCut_xF, hImpactCuts, 200, -1, 1, ih, "xF"); ih++;
   HistArraySetupMC(hCut_qT, hImpactCuts, 200, 0, 5, ih, "qT"); ih++;
+  HistArraySetupMC(hCut_PhiPhoton, hImpactCuts, 200, 0, 5, ih,"PhiPhoton");ih++;
+  HistArraySetupMC(hCut_PhiS, hImpactCuts, 200, 0, 5, ih,"PhiS");ih++;
+  HistArraySetupMC(hCut_PhiS_simple, hImpactCuts,200,0,5,ih,"PhiS_simple");ih++;
 
   
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
@@ -672,6 +677,11 @@ int main(int argc, char **argv){
   tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");
   // }}}
 
+  //Cuts (Turn on/off)
+  // {{{
+  Bool_t physKinematics=true, qTcut=true, vxZ_NH3=true, rad_NH3=true;
+  Bool_t gen_trIn_Z=true, gen_tr1_tr2=true;
+  // }}}
 
   Int_t tree_entries = T1->GetEntries();
   //Int_t tree_entries = 10000; cout << "Debugging" << endl;//Debug
@@ -681,51 +691,60 @@ int main(int argc, char **argv){
   for (Int_t i=0; i<tree_entries; i++){
     T1->GetEntry(i, 0);
 
-	//Settings
-	if (first || i==tree_entries-1){
-		cout << " " << endl;
-		cout << "Setup!!!!!!!!!" << endl;
-		cout << "Normal DY cuts" << endl;
-		cout << "vMCtrInZ < 0 only" << endl;
-		cout << " " << endl;
+    //Settings
+    if (first || i==tree_entries-1){
+      cout << " " << endl;
+      cout << "Setup!!!!!!!!!" << endl;
+      cout << "Physical kinematics	=    " << physKinematics << endl;
+      cout << "qTcut			=    " << qTcut <<  endl;
+      cout << "vxZ_NH3			=    " << vxZ_NH3 << endl;
+      cout << "rad_NH3			=    " << rad_NH3 << endl;
+      cout << "Positive vMCtrIn_Z	=    " << gen_trIn_Z << endl;
+      cout << "Physical gen_tr1_tr2	=    " << gen_tr1_tr2 << endl;
+      cout << " " << endl;
 
-		first = false;
-	}
+      first = false;
+    }
     
     //Cuts
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
-
-    Double_t cut_variables[nCutHist] = {vx_z, theta_traj1,
-					phi_traj1, qP_traj1, theta_traj2,
-					phi_traj2,
-					qP_traj2, x_beam, x_target,
-					x_feynman, q_transverse};
-    Int_t icut = 0;
-    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
     TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
     TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
     TLorentzVector lv_diMu = lv_p1_Mu + lv_p2_Mu;
     TLorentzVector lv_target_1 (0, 0, 0, M_proton);
 
-    if (x_beam < 0.0 || x_beam > 1.0) continue;
-    if (x_target < 0.0 || x_target > 1.0) continue;
-    if (x_feynman < -1.0 || x_feynman > 1.0) continue;
+    Double_t cut_variables[nCutHist] = {vx_z, theta_traj1,
+					phi_traj1, qP_traj1, theta_traj2,
+					phi_traj2,
+					qP_traj2, x_beam, x_target,
+					x_feynman, q_transverse, lv_diMu.Phi()};
+
+    Bool_t inNH3 = ( (vx_z>-294.5 && vx_z<-239.3) ||
+		     (vx_z>-219.5 && vx_z<-164.3) ) ? true : false;
+    
+    Int_t icut = 0;
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+
+    if (physKinematics && (x_beam < 0.0 || x_beam > 1.0) ) continue;
+    if (physKinematics && (x_target < 0.0 || x_target > 1.0) ) continue;
+    if (physKinematics && (x_feynman < -1.0 || x_feynman > 1.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
-    if (q_transverse < 0.4 || q_transverse > 5.0) continue;
+    if (qTcut && (q_transverse < 0.4 || q_transverse > 5.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//qT cuts
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
-    if ( (vx_z < -294.5 || vx_z > -239.3) && (vx_z < -219.5 || vx_z > -164.3)
-	 ) continue;//NH3 targets
+    if (vxZ_NH3 && (vx_z < -294.5 || vx_z > -239.3) &&
+	(vx_z < -219.5 || vx_z > -164.3)
+	) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target z-cut
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
-    if(TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >= TMath::Power(1.9, 2)
-       ) continue;//NH3 targets
+    if(rad_NH3 && (TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >=
+		   TMath::Power(1.9, 2) ) ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target radial cut
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
         
@@ -740,24 +759,28 @@ int main(int argc, char **argv){
     TLorentzVector lv_photon_main(vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E);
     TLorentzVector lv_beam_main(beam_X, beam_Y, beam_Z, beam_E);
 
-	if (vMCtrIn_Z < 0) vMCtrIn_Z = -vMCtrIn_Z;
-	else continue;//Don't know what positive pInZ stuff is
-	if (vMCtr1_X < -200 || vMCtr2_X < -200 || vMCtrIn_X < -200) continue;
-	if (vMCtr1_Y < -200 || vMCtr2_Y < -200 || vMCtrIn_Y < -200) continue;
-	if (vMCtr1_Z < -200 || vMCtr2_Z < -200 || vMCtrIn_Z < -200) continue;
+    if (gen_trIn_Z && (vMCtrIn_Z < 0) ) vMCtrIn_Z = -vMCtrIn_Z;
+    else continue;//Don't know what positive pInZ stuff is
+    if (gen_tr1_tr2 &&
+	(vMCtr1_X < -200 || vMCtr2_X < -200 || vMCtrIn_X < -200) ) continue;
+    if (gen_tr1_tr2 &&
+	(vMCtr1_Y < -200 || vMCtr2_Y < -200 || vMCtrIn_Y < -200) ) continue;
+    if (gen_tr1_tr2 &&
+	(vMCtr1_Z < -200 || vMCtr2_Z < -200 || vMCtrIn_Z < -200) ) continue;
+    
     Double_t Gen_beam[] = {vMCtrIn_X, vMCtrIn_Y, vMCtrIn_Z, vMCtrIn_E};
     Double_t Gen_muPlus[] = {vMCtr1_X, vMCtr1_Y, vMCtr1_Z, vMCtr1_E};
     Double_t Gen_muMinus[] = {vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E};
     //Int_t period = -1;//period 1 defined as upstream up, downstream down
 
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
-    //if (vx_z <= -230){//No target cuts
+      //if (vx_z <= -230){//No target cuts
       Spin = 1.0;
       targetPosition = 0;
 
     }//Up stream
     else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
-    //else if (vx_z >= -230){//No target cuts
+      //else if (vx_z >= -230){//No target cuts
       Spin = -1.0;
       targetPosition = 1;
 
@@ -846,7 +869,7 @@ int main(int argc, char **argv){
     if(PhiS_lab > TMath::Pi()) PhiS_lab = -2*TMath::Pi() + PhiS_lab;
     else if (PhiS_lab < -1.0*TMath::Pi() ) PhiS_lab = 2*TMath::Pi() + PhiS_lab;
     PhiS = lv_Spin_TF.Phi();
-    PhiS_simple = lv_Spin_simple_TF.Phi();
+    xPhiS_simple = lv_Spin_simple_TF.Phi();
     Phi_CS = lv_muMinus_CS.Phi();
     Theta_CS = lv_muMinus_CS.Theta();
 
