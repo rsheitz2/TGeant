@@ -76,6 +76,9 @@ Bool_t BinAvg(std::vector<Double_t> &Avg, std::vector<Int_t> &count,
 		if(iter == 0 && binVal < *it ) {
 			std::cout << "!!!!!!!!!!!!!!!" << std::endl;
 			std::cout << "bin value too low!!!!" << std::endl;
+			std::cout << "Lower bound: " << *it << "    val: "
+				  << binVal << std::endl;
+			std::cout << " " << std::endl;
 
 			return false;
 		}
@@ -91,6 +94,9 @@ Bool_t BinAvg(std::vector<Double_t> &Avg, std::vector<Int_t> &count,
   
   std::cout << "!!!!!!!!!!!!!!!" << std::endl;
   std::cout << "bin value too high!!!!" << std::endl;
+  std::cout << "Upper bound: " << binValBounds.back() << "    val:"
+	    << binVal << std::endl;
+  std::cout << " " << std::endl;
   return false;
 }
 

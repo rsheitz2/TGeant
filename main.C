@@ -261,7 +261,6 @@ int main(int argc, char **argv){
   T1->Add(fname);
   // }}}
   
-
   //Internal variables and binning
   ////////////////
   // {{{
@@ -558,12 +557,15 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("HG02_y2_p1y", &HG02_y2_p1y);
   T1->SetBranchAddress("HG02_y2_p2x", &HG02_y2_p2x);
   T1->SetBranchAddress("HG02_y2_p2y", &HG02_y2_p2y);
-
+  // }}}
   
   //Cut histograms
+  ///////////////
+  // {{{
   const Int_t nCutHist = 13;//Number of impact cut hist
   const Int_t nCutHist_inNH3 = 2;//Spin dependent cuts
   //const Int_t nMCCuts = 6//src/setup.h
+  const Int_t n2D_cutHist = 3;
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
 
@@ -575,8 +577,12 @@ int main(int argc, char **argv){
   TH1D *hCut_PhiPhoton[nMCCuts], *hCut_PhiPhoton_gen[nMCCuts];
   TH1D *hCut_PhiS_simple[nMCCuts], *hCut_PhiS_simple_gen[nMCCuts];
 
-  TH1D *hImpactCuts[nCutHist+nCutHist_inNH3][nMCCuts];
+  TH2D *hCut_MuP_PxPy[nRealCuts], *hCut_MuM_PxPy[nRealCuts];
+  TH2D *hCut_Beam_PxPy[nRealCuts];
 
+  TH1D *hImpactCuts[nCutHist+nCutHist_inNH3][nMCCuts];
+  TH2D *h2D_ImpactCuts[n2D_cutHist][nMCCuts];
+ 
   Int_t ih = 0;
   HistArraySetupMC(hCut_VxZ, hImpactCuts, 500, -500, 100, ih, "VxZ"); ih++;
   HistArraySetupMC(hCut_MuPTheta, hImpactCuts, 100, 0, 0.3, ih, "MuPTheta");
@@ -603,6 +609,14 @@ int main(int argc, char **argv){
   HistArraySetupMC(hCut_PhiS_simple_gen, hImpactCuts,
 		   200, -TMath::Pi(),TMath::Pi(),
 		   ih, "PhiS_simple_gen"); ih++;
+
+  ih=0;
+  Hist2D_ArraySetupMC(hCut_MuP_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
+		    "MuP_PxPy"); ih++;
+  Hist2D_ArraySetupMC(hCut_MuM_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
+		    "MuM_PxPy"); ih++;
+  Hist2D_ArraySetupMC(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -5, 5, 100,-5,5,ih,
+		    "Beam_PxPy"); ih++;
 
   
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
@@ -723,8 +737,8 @@ int main(int argc, char **argv){
     ///////////////General useful quantities and Compass/TF frame setups
     // {{{
     //Compass frame:
-    TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
-    TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
+    TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);//MuPlus
+    TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);//MuMinus
     TLorentzVector lv_beam(beam_X, beam_Y, beam_Z, beam_E);
     TLorentzVector lv_target(0, 0, 0, M_proton);
     TLorentzVector lv_Spin(0, 1.0, 0, 0);//same as Spin_simple now
@@ -761,16 +775,21 @@ int main(int argc, char **argv){
 					x_feynman, q_transverse, lv_diMu.Phi(),
 					lv_Gen_virtualPhoton.Phi() };
 
+    Double_t cut2D_variables[2*n2D_cutHist] = {lv_p1_Mu.X(), lv_p1_Mu.Y(),
+					       lv_p2_Mu.X(), lv_p2_Mu.Y(),
+					       lv_beam.X(), lv_beam.Y()};
+
     Bool_t inNH3 = ( (vx_z>-294.5 && vx_z<-239.3) ||
 		     (vx_z>-219.5 && vx_z<-164.3) ) ? true : false;
     
-    Int_t icut = 0;
-    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     // }}}
     
-
     //Perform Cuts
     // {{{
+    Int_t icut = 0;
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); 
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); icut++;
+    
     if (physKinematics && (x_beam < 0.0 || x_beam > 1.0) ) continue;
     if (physKinematics && (x_target < 0.0 || x_target > 1.0) ) continue;
     if (physKinematics && (x_feynman < -1.0 || x_feynman > 1.0) ) continue;
@@ -786,6 +805,7 @@ int main(int argc, char **argv){
 			  lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );
     }
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if (qTcut && (q_transverse < 0.4 || q_transverse > 5.0) ) continue;
@@ -793,6 +813,7 @@ int main(int argc, char **argv){
     if (inNH3){
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if (vxZ_NH3 && (vx_z < -294.5 || vx_z > -239.3) &&
@@ -802,6 +823,7 @@ int main(int argc, char **argv){
     if (inNH3){
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if(rad_NH3 && (TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >=
@@ -810,6 +832,7 @@ int main(int argc, char **argv){
     if (inNH3){
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
     if (gen_trIn_Z && (vMCtrIn_Z < 0) ) vMCtrIn_Z = -vMCtrIn_Z;
@@ -819,6 +842,7 @@ int main(int argc, char **argv){
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );
     }
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
     if (gen_tr1_tr2 &&
@@ -831,9 +855,9 @@ int main(int argc, char **argv){
     if (inNH3){
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
+    Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     // }}}
-    
         
     ////All data after cuts
     //////////////
@@ -937,18 +961,6 @@ int main(int argc, char **argv){
     TFile *myFile = new TFile(outFile, "RECREATE");
     hCuts->Write();
     tree->Write();
-  
-    tv_xN_bounds.Write("tv_xN_bounds");
-    tv_xPi_bounds.Write("tv_xPi_bounds");
-    tv_xF_bounds.Write("tv_xF_bounds");
-    tv_pT_bounds.Write("tv_pT_bounds");
-    tv_M_bounds.Write("tv_M_bounds");
-
-    tv_xN_xval.Write("tv_xN_xval");
-    tv_xPi_xval.Write("tv_xPi_xval");
-    tv_xF_xval.Write("tv_xF_xval");
-    tv_pT_xval.Write("tv_pT_xval");
-    tv_M_xval.Write("tv_M_xval");
 
     TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
     TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
@@ -965,6 +977,10 @@ int main(int argc, char **argv){
     TDirectory *PhiPhoton_gen_CutImpact=myFile->mkdir("PhiPhoton_gen_CutImpact");
     TDirectory *PhiS_simple_CutImpact = myFile->mkdir("PhiS_simple_CutImpact");
     TDirectory *PhiS_simple_gen_CutImpact=myFile->mkdir("PhiS_simple_gen_CutImpact");
+    
+    TDirectory *MuP_PxPy_CutImpact = myFile->mkdir("MuP_PxPy_CutImpact");
+    TDirectory *MuM_PxPy_CutImpact = myFile->mkdir("MuM_PxPy_CutImpact");
+    TDirectory *Beam_PxPy_CutImpact = myFile->mkdir("Beam_PxPy_CutImpact");
     for (Int_t i=0; i<nMCCuts; i++) {
       VxZ_CutImpact->cd();
       hCut_VxZ[i]->Write(cutNames[i]);
@@ -1000,8 +1016,30 @@ int main(int argc, char **argv){
       hCut_PhiS_simple[i]->Write(cutNames[i]);
       PhiS_simple_gen_CutImpact->cd();
       hCut_PhiS_simple_gen[i]->Write(cutNames[i]);
+
+      MuP_PxPy_CutImpact->cd();
+      hCut_MuP_PxPy[i]->Write(cutNames[i]);
+      MuM_PxPy_CutImpact->cd();
+      hCut_MuM_PxPy[i]->Write(cutNames[i]);
+      Beam_PxPy_CutImpact->cd();
+      hCut_Beam_PxPy[i]->Write(cutNames[i]);
     }
 
+    myFile->cd();
+    
+    tv_xN_bounds.Write("tv_xN_bounds");
+    tv_xPi_bounds.Write("tv_xPi_bounds");
+    tv_xF_bounds.Write("tv_xF_bounds");
+    tv_pT_bounds.Write("tv_pT_bounds");
+    tv_M_bounds.Write("tv_M_bounds");
+
+    tv_xN_xval.Write("tv_xN_xval");
+    tv_xPi_xval.Write("tv_xPi_xval");
+    tv_xF_xval.Write("tv_xF_xval");
+    tv_pT_xval.Write("tv_pT_xval");
+    tv_M_xval.Write("tv_M_xval");
+
+    
     cout << myFile->GetName() << " was written" << endl;
     myFile->Close();
   }

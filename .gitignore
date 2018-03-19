@@ -4,3 +4,5 @@ main
 RealData
 home
 *.swp
+TestFiles
+setup.sh

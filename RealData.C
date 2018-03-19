@@ -28,17 +28,22 @@ int main(int argc, char **argv){
     cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)";
     cout << endl;
     cout << "" << endl;
+    cout << "Option:  -M (\"HM\", \"JPsi\") to specify which mass range to use";
+    cout << "\n   (default mass range is high mass)" << endl;
     exit(EXIT_FAILURE);
   }
   cout << "" << endl;
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
-  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, Pflag=0, binFlag=0;
+  ///////////////
+  // {{{
+  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, Pflag=0, binFlag=0, Mflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", period = "", binFile = "";
+  TString massRange="";
 
-  while ((c = getopt (argc, argv, "wb:u:f:Q:P:")) != -1) {
+  while ((c = getopt (argc, argv, "wM:b:u:f:Q:P:")) != -1) {
     switch (c) {
     case 'u':
       uflag = 1;
@@ -63,6 +68,10 @@ int main(int argc, char **argv){
       Pflag = 1;
       period += optarg;
       break;
+    case 'M':
+      Mflag = 1;
+      massRange += optarg;
+      break;
     case '?':
       if (optopt == 'u')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -73,6 +82,8 @@ int main(int argc, char **argv){
       else if (optopt == 'Q')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (optopt == 'b')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'M')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (isprint (optopt))
 	fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -129,9 +140,14 @@ int main(int argc, char **argv){
   rad_bounds.push_back(0.0);
   vxZ_upstream_bounds.push_back(-294.5);
   vxZ_downstream_bounds.push_back(-219.5);
-  
-  M_bounds.push_back(2.5);//JPsi mass
-  //M_bounds.push_back(4.3);//High mass
+
+  if (!Mflag || massRange=="HM") M_bounds.push_back(4.3);//High mass
+  else if (massRange=="JPsi")M_bounds.push_back(2.5);//JPsi mass
+  else {
+    cout << "Invalid mass range specified" << endl;
+    exit(EXIT_FAILURE);
+  }
+
   if (binFlag) {
     string line;
     TString dy_type = "";
@@ -236,26 +252,11 @@ int main(int argc, char **argv){
       }
     }//end file loop
   }//end binFlag
-  else {//HM DY binning
-    xN_bounds.push_back(0.13);
-    xN_bounds.push_back(0.19);
-    xPi_bounds.push_back(0.40);
-    xPi_bounds.push_back(0.56);
-    xF_bounds.push_back(0.21);
-    xF_bounds.push_back(0.41);
-    pT_bounds.push_back(0.9);
-    pT_bounds.push_back(1.4);
-    rad_bounds.push_back(0.719511);
-    rad_bounds.push_back(1.14036);
-    vxZ_upstream_bounds.push_back(-275.021);
-    vxZ_upstream_bounds.push_back(-258.531);
-    vxZ_downstream_bounds.push_back(-199.956);
-    vxZ_downstream_bounds.push_back(-183.598);
-
-    M_bounds.push_back(2.85);//JPsi mass
-    M_bounds.push_back(3.12);//JPsi mass
-    //M_bounds.push_back(4.75);//High mass
-    //M_bounds.push_back(5.5);//High mass
+  else {
+    cout << " " << endl;
+    cout << "No bin flag file given" << endl;
+    cout << " " << endl;
+    exit(EXIT_FAILURE);
   }
   xN_bounds.push_back(1.0);
   xPi_bounds.push_back(1.0);
@@ -264,15 +265,14 @@ int main(int argc, char **argv){
   rad_bounds.push_back(1.9);
   vxZ_upstream_bounds.push_back(-239.3);
   vxZ_downstream_bounds.push_back(-164.3);
-    
-  M_bounds.push_back(4.3);//JPsi mass
-  //M_bounds.push_back(8.5);//High mass
+
+  if (!Mflag || massRange=="HM") M_bounds.push_back(8.5);//High mass
+  else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
   cout << " " << endl;
-  cout << "Warning!!!!!!!" << endl;
-  cout << "JPsi Mass" << endl;
-  //cout << "High Mass" << endl;
-  cout << "!!!!!!!!!!!!!!!" << endl;
+  cout << "Mass range set to:" << endl;
+  (!Mflag) ? cout << "HM" << endl : cout << massRange << endl;
   cout << " " << endl;
+
   if (M_bounds.at(0) > M_bounds.at(1) || M_bounds.back() < M_xval.front() ){
 	  cout << "Mass Range not setup correct" << endl;
     exit(EXIT_FAILURE);
@@ -297,8 +297,11 @@ int main(int argc, char **argv){
     cout << "Bad spills file did not open" << endl;
     exit(EXIT_FAILURE);    
   }
+  // }}}
 
   //Internal variables and binning
+  ///////////////
+  // {{{
   Double_t M_proton = 0.938272;
   Int_t nBounds = xN_bounds.size();
 
@@ -685,10 +688,15 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("HG02_y2_p1y", &HG02_y2_p1y);
   T1->SetBranchAddress("HG02_y2_p2x", &HG02_y2_p2x);
   T1->SetBranchAddress("HG02_y2_p2y", &HG02_y2_p2y);
+  // }}}
 
   //Cut histograms
-  const Int_t nCutHist = 11;//Number of impact cut hist
+  ///////////////
+  // {{{
+  const Int_t nCutHist = 12;//Number of impact cut hist
+  const Int_t nCutHist_inNH3 = 2;//Spin dependent cuts
   //const Int_t nRealCuts = 7;//Number of cuts made (setup.h)
+  const Int_t n2D_cutHist = 3;
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
 
@@ -696,10 +704,15 @@ int main(int argc, char **argv){
   TH1D *hCut_MuPTheta[nRealCuts],*hCut_MuPPhi[nRealCuts],*hCut_MuPqP[nRealCuts];
   TH1D *hCut_MuMTheta[nRealCuts],*hCut_MuMPhi[nRealCuts],*hCut_MuMqP[nRealCuts];
   TH1D *hCut_xN[nRealCuts], *hCut_xPi[nRealCuts], *hCut_xF[nRealCuts];
-  TH1D *hCut_qT[nRealCuts];
+  TH1D *hCut_qT[nRealCuts], *hCut_PhiPhoton[nRealCuts];
+  TH1D *hCut_PhiS[nRealCuts], *hCut_PhiS_simple[nRealCuts];
 
-  TH1D *hImpactCuts[nCutHist][nRealCuts];
+  TH2D *hCut_MuP_PxPy[nRealCuts], *hCut_MuM_PxPy[nRealCuts];
+  TH2D *hCut_Beam_PxPy[nRealCuts];
 
+  TH1D *hImpactCuts[nCutHist+nCutHist_inNH3][nRealCuts];
+  TH2D *h2D_ImpactCuts[n2D_cutHist][nRealCuts];
+  
   Int_t ih = 0;
   HistArraySetupReal(hCut_VxZ, hImpactCuts, 500, -500, 100, ih, "VxZ"); ih++;
   HistArraySetupReal(hCut_MuPTheta, hImpactCuts, 100, 0, 0.3, ih, "MuPTheta");
@@ -716,6 +729,21 @@ int main(int argc, char **argv){
   HistArraySetupReal(hCut_xPi, hImpactCuts, 100, 0, 1, ih, "xPi"); ih++;
   HistArraySetupReal(hCut_xF, hImpactCuts, 200, -1, 1, ih, "xF"); ih++;
   HistArraySetupReal(hCut_qT, hImpactCuts, 200, 0, 5, ih, "qT"); ih++;
+  HistArraySetupMC(hCut_PhiPhoton, hImpactCuts, 200, -TMath::Pi(), TMath::Pi(),
+		   ih,"PhiPhoton");ih++;
+  HistArraySetupMC(hCut_PhiS, hImpactCuts, 200, -TMath::Pi(), TMath::Pi(),
+		   ih,"PhiS");ih++;
+  HistArraySetupMC(hCut_PhiS_simple, hImpactCuts,
+		   200, -TMath::Pi(), TMath::Pi(),
+		   ih,"PhiS_simple");ih++;
+
+  ih=0;
+  Hist2D_ArraySetupReal(hCut_MuP_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
+		    "MuP_PxPy"); ih++;
+  Hist2D_ArraySetupReal(hCut_MuM_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
+		    "MuM_PxPy"); ih++;
+  Hist2D_ArraySetupReal(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -5, 5, 100,-5,5,ih,
+		    "Beam_PxPy"); ih++;
 
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
   Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS;
@@ -771,16 +799,60 @@ int main(int argc, char **argv){
   tree->Branch("HG02_y2_p1x", &HG02_y2_p1x, "HG02_y2_p1x/D");
   tree->Branch("HG02_y2_p1y", &HG02_y2_p1y, "HG02_y2_p1y/D");
   tree->Branch("HG02_y2_p2x", &HG02_y2_p2x, "HG02_y2_p2x/D");
-  tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");  
+  tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");
+  // }}}
+
+  //Cuts (Turn on/off)
+  // {{{
+  Bool_t badSpillCut=true, physKinematics=true, qTcut=true, dilCut=true;
+  Bool_t vxZ_NH3=true, rad_NH3=true;
+  // }}}
 
   Int_t tree_entries = T1->GetEntries();
   //Int_t tree_entries = 1000;//Debug
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
+  Bool_t first = true;
   for (Int_t ev=0; ev<tree_entries; ev++){
     T1->GetEntry(ev, 0);
 
-    //Cuts
+    //Settings
+    if (first || ev==tree_entries-1){
+      cout << " " << endl;
+      cout << "Setup!!!!!!!!!" << endl;
+      cout << "Bad spills		=    " << badSpillCut << endl;
+      cout << "Physical kinematics	=    " << physKinematics << endl;
+      cout << "qTcut			=    " << qTcut <<  endl;
+      cout << "Nonzero dilution factor  =    " << dilCut << endl;
+      cout << "vxZ_NH3			=    " << vxZ_NH3 << endl;
+      cout << "rad_NH3			=    " << rad_NH3 << endl;
+      cout << " " << endl;
+
+      first = false;
+    }
+
+    //Perform Cuts
+    // {{{
+
+    //Setup Vectors in different coordinate systems
+    //Compass frame:
+    TLorentzVector lv_beam(beam_X, beam_Y, beam_Z, beam_E);
+    TLorentzVector lv_target(0, 0, 0, M_proton);
+    TLorentzVector lv_Spin(0, Spin[0], 0, 0);
+    TLorentzVector lv_Spin_simple(0, 1, 0, 0);
+    TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);//MuPlus
+    TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);//MuMinus
+    TLorentzVector lv_diMu(vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E);
+
+    //Target frame:
+    TLorentzVector lv_beam_TF(lv_beam);
+    TLorentzVector lv_target_TF(lv_target);
+    TLorentzVector lv_Spin_TF(lv_Spin);
+    TLorentzVector lv_Spin_simple_TF(lv_Spin_simple);
+    TLorentzVector lv_muPlus_TF(lv_p1_Mu);
+    TLorentzVector lv_muMinus_TF(lv_p2_Mu);
+    TLorentzVector lv_virtualPhoton_TF(lv_diMu);
+    
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
 
@@ -788,60 +860,90 @@ int main(int argc, char **argv){
 					phi_traj1, qP_traj1, theta_traj2,
 					phi_traj2,
 					qP_traj2, x_beam, x_target,
-					x_feynman, q_transverse};
+					x_feynman, q_transverse, lv_diMu.Phi()};
+
+    Double_t cut2D_variables[2*n2D_cutHist] = {lv_p1_Mu.X(), lv_p1_Mu.Y(),
+					       lv_p2_Mu.X(), lv_p2_Mu.Y(),
+					       lv_beam.X(), lv_beam.Y()};
+
+    Bool_t inNH3 = ( (vx_z>-294.5 && vx_z<-239.3) ||
+		     (vx_z>-219.5 && vx_z<-164.3) ) ? true : false;
+    
     Int_t icut = 0;
-    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+    FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist);
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
+    if (inNH3){
+      align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
+			  lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
+			  lv_muMinus_TF);
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() ); 
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); } icut++;
 
     map<Long64_t, vector<Long64_t> >::iterator it = BadMap.find(RunNum);
-    if (it != BadMap.end() ){
+    if (badSpillCut && it != BadMap.end() ){
       if (std::find(BadMap[it->first].begin(), BadMap[it->first].end(), -310)
 	  != BadMap[it->first].end() ) continue;
       else if (std::find(BadMap[it->first].begin(), BadMap[it->first].end(),
 			 SpillNum) != BadMap[it->first].end() ) continue;
     }
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Bad spills
+    if (inNH3) {
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() ); 
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); }
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
-    TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
-    TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
-    TLorentzVector lv_diMu = lv_p1_Mu + lv_p2_Mu;
-    TLorentzVector lv_target_1 (0, 0, 0, M_proton);
-
-    if (x_beam < 0.0 || x_beam > 1.0) continue;
-    if (x_target < 0.0 || x_target > 1.0) continue;
-    if (x_feynman < -1.0 || x_feynman > 1.0) continue;
+    if (physKinematics && (x_beam < 0.0 || x_beam > 1.0) ) continue;
+    if (physKinematics && (x_target < 0.0 || x_target > 1.0) ) continue;
+    if (physKinematics && (x_feynman < -1.0 || x_feynman > 1.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
+    if (inNH3) {
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() ); 
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); }
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
-    if (q_transverse < 0.4 || q_transverse > 5.0) continue;
+    if (qTcut && (q_transverse < 0.4 || q_transverse > 5.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//qT cuts
+    if (inNH3) {
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); }
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
-    if (dilutionFactor == 0.0) continue;
+    if (dilCut && (dilutionFactor == 0.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//dilution Factor
+    if (inNH3) {
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() ); 
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); }
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
-    if ( (vx_z < -294.5 || vx_z > -239.3) && (vx_z < -219.5 || vx_z > -164.3)
+    if (vxZ_NH3 && (vx_z < -294.5 || vx_z > -239.3) &&
+	(vx_z < -219.5 || vx_z > -164.3)
 	 ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target z-cut
+    if (inNH3) {
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() ); 
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); }
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
-    if(TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >= TMath::Power(1.9, 2)
+    if(rad_NH3 &&
+       (TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >= TMath::Power(1.9, 2) )
        ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target radial cut
+    if (inNH3) {
+      hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() ); 
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() ); }
+    Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+
+    // }}}
 
     ////All data after cuts
     //////////////
     ///////////////General useful quantities
-    Double_t beam[] = {beam_X, beam_Y, beam_Z, beam_E};
-    Double_t target[] = {M_proton};
-    Double_t muPlus[] = {vP1_X, vP1_Y, vP1_Z, vP1_E};
-    Double_t muMinus[] = {vP2_X, vP2_Y, vP2_Z, vP2_E};
-    Double_t virtualPhoton[] = {vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E};
-    TLorentzVector lv_photon_main(vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E);
-    TLorentzVector lv_beam_main(beam_X, beam_Y, beam_Z, beam_E);
-
     Double_t radius = TMath::Sqrt(vx_x*vx_x+vx_y*vx_y);
 
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
@@ -854,6 +956,8 @@ int main(int argc, char **argv){
       Spin[6] = upStreamCoil5;
       targetPosition = 0;
 
+      //Dilution
+      // {{{
       AvgDilution += TMath::Abs(dilutionFactor);
       AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
       AvgDilution_count++;
@@ -880,7 +984,10 @@ int main(int argc, char **argv){
 	     M_bounds, correct_dil);
       BinAvg(AvgDil_rad_UpStream, AvgDil_rad_count_UpStream, radius, rad_bounds,
 	     correct_dil);
+      // }}}
 
+      //Polarization
+      // {{{
       Double_t pol = TMath::Abs(Polarization);
       BinAvg(AvgPol_xN_UpStream, AvgPol_xN_count_UpStream, x_target,
 	     xN_bounds, pol);
@@ -896,8 +1003,11 @@ int main(int argc, char **argv){
 	     rad_bounds, pol);
       BinAvg(AvgPol_vxZ_upstream,AvgPol_vxZ_count_UpStream, vx_z,
 	     vxZ_upstream_bounds, pol);
+      // }}}
 
       if (Spin[0] > 0) {//Polarized Up
+	//Dilution/Polarization
+	// {{{
 	BinAvg(AvgDil_xN_UpStream_Up, AvgDil_xN_count_UpStream_Up, x_target,
 	       xN_bounds, correct_dil);
 	BinAvg(AvgDil_xPi_UpStream_Up, AvgDil_xPi_count_UpStream_Up, x_beam,
@@ -927,8 +1037,11 @@ int main(int argc, char **argv){
 	       rad_bounds, pol);
 	BinAvg(AvgPol_vxZ_upstream_Up, AvgPol_vxZ_count_UpStream_Up, vx_z,
 	       vxZ_upstream_bounds, pol);
+	// }}}
       }
       else if (Spin[0] < 0){//Polarized Down
+	//Dilution/Polarization
+	// {{{
 	BinAvg(AvgDil_xN_UpStream_Down, AvgDil_xN_count_UpStream_Down, 
 	       x_target, xN_bounds, correct_dil);
 	BinAvg(AvgDil_xPi_UpStream_Down, AvgDil_xPi_count_UpStream_Down, 
@@ -958,6 +1071,7 @@ int main(int argc, char **argv){
 	       rad_bounds, pol);
 	BinAvg(AvgPol_vxZ_upstream_Down, AvgPol_vxZ_count_UpStream_Down, vx_z,
 	       vxZ_upstream_bounds, pol);
+	// }}}
       }
     }//Up stream
     else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
@@ -970,6 +1084,8 @@ int main(int argc, char **argv){
       Spin[6] = downStreamCoil10;
       targetPosition = 1;
 
+      //Dilution
+      // {{{
       AvgDilution += TMath::Abs(dilutionFactor);
       AvgDilution_corrected += 0.91*TMath::Abs(dilutionFactor);
       AvgDilution_count++;
@@ -998,7 +1114,10 @@ int main(int argc, char **argv){
 	     rad_bounds, correct_dil);
       BinAvg(AvgDil_vxZ_downstream,AvgDil_vxZ_count_DownStream, vx_z,
 	     vxZ_downstream_bounds, correct_dil);
-      
+      // }}}
+
+      //Polarization
+      // {{{
       Double_t pol = TMath::Abs(Polarization);
       BinAvg(AvgPol_xN_DownStream, AvgPol_xN_count_DownStream, x_target,
 	     xN_bounds, pol);
@@ -1014,8 +1133,11 @@ int main(int argc, char **argv){
 	     rad_bounds, pol);
       BinAvg(AvgPol_vxZ_downstream,AvgPol_vxZ_count_DownStream, vx_z,
 	     vxZ_downstream_bounds, pol);
+      // }}}
 
       if (Spin[0] > 0) {//Polarized Up
+	//Dilution/Polarization
+	// {{{
 	BinAvg(AvgDil_xN_DownStream_Up, AvgDil_xN_count_DownStream_Up, 
 	       x_target, xN_bounds, correct_dil);
 	BinAvg(AvgDil_xPi_DownStream_Up, AvgDil_xPi_count_DownStream_Up, 
@@ -1045,8 +1167,11 @@ int main(int argc, char **argv){
 	       rad_bounds, pol);
 	BinAvg(AvgPol_vxZ_downstream_Up, AvgPol_vxZ_count_DownStream_Up, vx_z,
 	       vxZ_downstream_bounds, pol);
+	// }}}
       }
       else if (Spin[0] < 0){//Polarized Down
+	//Dilution/Polarization
+	// {{{
 	BinAvg(AvgDil_xN_DownStream_Down, AvgDil_xN_count_DownStream_Down, 
 	       x_target, xN_bounds, correct_dil);
 	BinAvg(AvgDil_xPi_DownStream_Down, AvgDil_xPi_count_DownStream_Down, 
@@ -1076,32 +1201,16 @@ int main(int argc, char **argv){
 	       radius, rad_bounds, pol);
 	BinAvg(AvgPol_vxZ_downstream_Down, AvgPol_vxZ_count_DownStream_Down,
 	       vx_z, vxZ_downstream_bounds, pol);
+	// }}}
       }
     }//Down Stream
 
     //Setup Vectors in different coordinate systems
-    //Compass frame:
-    TLorentzVector lv_beam(beam[0], beam[1], beam[2], beam[3]);
-    TLorentzVector lv_target(0, 0, 0, target[0]);
-    //TLorentzVector lv_Spin(0, Spin[0], 0, 0);
-    TLorentzVector lv_Spin(0, Spin[0], 0, 0);
-    TLorentzVector lv_Spin_simple(0, 1, 0, 0);
-    TLorentzVector lv_muPlus(muPlus[0], muPlus[1], muPlus[2], muPlus[3]);
-    TLorentzVector lv_muMinus(muMinus[0], muMinus[1], muMinus[2], muMinus[3]);
-    TLorentzVector lv_virtualPhoton(virtualPhoton[0], virtualPhoton[1],
-				    virtualPhoton[2], virtualPhoton[3]);
-
-    //Target frame:
-    TLorentzVector lv_beam_TF(lv_beam);
-    TLorentzVector lv_target_TF(lv_target);
-    TLorentzVector lv_Spin_TF(lv_Spin);
-    TLorentzVector lv_Spin_simple_TF(lv_Spin_simple);
-    TLorentzVector lv_muPlus_TF(lv_muPlus);
-    TLorentzVector lv_muMinus_TF(lv_muMinus);
-    TLorentzVector lv_virtualPhoton_TF(lv_virtualPhoton);
-    align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
+    // {{{
+    //Performed after bad spills cut
+    /*align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
 			  lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
-			  lv_muMinus_TF);
+			  lv_muMinus_TF);*/
 
 
     //Boost from TF to CS
@@ -1114,8 +1223,9 @@ int main(int argc, char **argv){
     TLorentzVector lv_virtualPhoton_CS(lv_virtualPhoton_TF);
     boost_CS(lv_beam_CS, lv_target_CS, lv_Spin_CS, lv_Spin_simple_CS,
 	     lv_virtualPhoton_CS, lv_muPlus_CS, lv_muMinus_CS);
+    // }}}
 
-    Double_t PhiS_lab = lv_Spin.Phi() - lv_virtualPhoton.Phi();
+    Double_t PhiS_lab = lv_Spin.Phi() - lv_diMu.Phi();
     if(PhiS_lab > TMath::Pi()) PhiS_lab = -2*TMath::Pi() + PhiS_lab;
     else if (PhiS_lab < -1.0*TMath::Pi() ) PhiS_lab = 2*TMath::Pi() + PhiS_lab;
     PhiS = lv_Spin_TF.Phi();
@@ -1143,7 +1253,9 @@ int main(int argc, char **argv){
     tree->Fill();
   }//tree entries
 
-  
+
+  //Dilution and Polarization TVectorD
+  // {{{
   TVectorD Dil_xN(nBins), Dil_xN_UpStream(nBins), Dil_xN_DownStream(nBins);
   TVectorD Dil_xN_UpStream_Up(nBins), Dil_xN_DownStream_Up(nBins);
   TVectorD Dil_xN_UpStream_Down(nBins), Dil_xN_DownStream_Down(nBins);
@@ -1396,6 +1508,7 @@ int main(int argc, char **argv){
   TVectorD Dil_int(1), Pol_int(1);
   Dil_int[0] = AvgDilution_corrected/AvgDilution_count;
   Pol_int[0] = AvgPolarization/AvgPolarization_count;
+  // }}}
 
   cout << "!!!!!!!!!!!!!!!" << endl;
   cout << "Code Finished" << endl;
@@ -1410,6 +1523,8 @@ int main(int argc, char **argv){
     hCuts->GetXaxis()->SetBinLabel(bin_index, cutNames[i]);
   }
 
+  //Write Output
+  // {{{
   if (!wflag && !Qflag) cout << "No file output" << endl;
   else{
     if (wflag) outFile += "RealData.root";
@@ -1417,6 +1532,68 @@ int main(int argc, char **argv){
     hCuts->Write();
     tree->Write();
 
+    TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
+    TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
+    TDirectory *MuPPhi_CutImpact = myFile->mkdir("MuPPhi_CutImpact");
+    TDirectory *MuPqP_CutImpact = myFile->mkdir("MuPqP_CutImpact");
+    TDirectory *MuMTheta_CutImpact = myFile->mkdir("MuMTheta_CutImpact");
+    TDirectory *MuMPhi_CutImpact = myFile->mkdir("MuMPhi_CutImpact");
+    TDirectory *MuMqP_CutImpact = myFile->mkdir("MuMqP_CutImpact");
+    TDirectory *xN_CutImpact = myFile->mkdir("xN_CutImpact");
+    TDirectory *xPi_CutImpact = myFile->mkdir("xPi_CutImpact");
+    TDirectory *xF_CutImpact = myFile->mkdir("xF_CutImpact");
+    TDirectory *qT_CutImpact = myFile->mkdir("qT_CutImpact");
+    TDirectory *PhiPhoton_CutImpact = myFile->mkdir("PhiPhoton_CutImpact");
+    TDirectory *PhiS_CutImpact = myFile->mkdir("PhiS_CutImpact");
+    TDirectory *PhiS_simple_CutImpact = myFile->mkdir("PhiS_simple_CutImpact");
+    
+    TDirectory *MuP_PxPy_CutImpact = myFile->mkdir("MuP_PxPy_CutImpact");
+    TDirectory *MuM_PxPy_CutImpact = myFile->mkdir("MuM_PxPy_CutImpact");
+    TDirectory *Beam_PxPy_CutImpact = myFile->mkdir("Beam_PxPy_CutImpact");
+    for (Int_t i=0; i<nRealCuts; i++) {
+      VxZ_CutImpact->cd();
+      hCut_VxZ[i]->Write(cutNames[i]);
+
+      MuPTheta_CutImpact->cd();
+      hCut_MuPTheta[i]->Write(cutNames[i]);
+      MuPPhi_CutImpact->cd();
+      hCut_MuPPhi[i]->Write(cutNames[i]);
+      MuPqP_CutImpact->cd();
+      hCut_MuPqP[i]->Write(cutNames[i]);
+
+      MuMTheta_CutImpact->cd();
+      hCut_MuMTheta[i]->Write(cutNames[i]);
+      MuMPhi_CutImpact->cd();
+      hCut_MuMPhi[i]->Write(cutNames[i]);
+      MuMqP_CutImpact->cd();
+      hCut_MuMqP[i]->Write(cutNames[i]);
+
+      xN_CutImpact->cd();
+      hCut_xN[i]->Write(cutNames[i]);
+      xPi_CutImpact->cd();
+      hCut_xPi[i]->Write(cutNames[i]);
+      xF_CutImpact->cd();
+      hCut_xF[i]->Write(cutNames[i]);
+      qT_CutImpact->cd();
+      hCut_qT[i]->Write(cutNames[i]);
+
+      PhiPhoton_CutImpact->cd();
+      hCut_PhiPhoton[i]->Write(cutNames[i]);
+      PhiS_CutImpact->cd();
+      hCut_PhiS[i]->Write(cutNames[i]);
+      PhiS_simple_CutImpact->cd();
+      hCut_PhiS_simple[i]->Write(cutNames[i]);
+
+      MuP_PxPy_CutImpact->cd();
+      hCut_MuP_PxPy[i]->Write(cutNames[i]);
+      MuM_PxPy_CutImpact->cd();
+      hCut_MuM_PxPy[i]->Write(cutNames[i]);
+      Beam_PxPy_CutImpact->cd();
+      hCut_Beam_PxPy[i]->Write(cutNames[i]);
+    }
+
+    myFile->cd();
+    
     tv_xN_bounds.Write("tv_xN_bounds");
     tv_xPi_bounds.Write("tv_xPi_bounds");
     tv_xF_bounds.Write("tv_xF_bounds");
@@ -1547,48 +1724,10 @@ int main(int argc, char **argv){
     Pol_rad_DownStream_Down.Write("Pol_rad_DownStream_Down");
     Pol_vxZ_downstream_Down.Write("Pol_vxZ_downstream_Down");    
 
-    TDirectory *VxZ_CutImpact = myFile->mkdir("VxZ_CutImpact");
-    TDirectory *MuPTheta_CutImpact = myFile->mkdir("MuPTheta_CutImpact");
-    TDirectory *MuPPhi_CutImpact = myFile->mkdir("MuPPhi_CutImpact");
-    TDirectory *MuPqP_CutImpact = myFile->mkdir("MuPqP_CutImpact");
-    TDirectory *MuMTheta_CutImpact = myFile->mkdir("MuMTheta_CutImpact");
-    TDirectory *MuMPhi_CutImpact = myFile->mkdir("MuMPhi_CutImpact");
-    TDirectory *MuMqP_CutImpact = myFile->mkdir("MuMqP_CutImpact");
-    TDirectory *xN_CutImpact = myFile->mkdir("xN_CutImpact");
-    TDirectory *xPi_CutImpact = myFile->mkdir("xPi_CutImpact");
-    TDirectory *xF_CutImpact = myFile->mkdir("xF_CutImpact");
-    TDirectory *qT_CutImpact = myFile->mkdir("qT_CutImpact");
-    for (Int_t i=0; i<nRealCuts; i++) {
-      VxZ_CutImpact->cd();
-      hCut_VxZ[i]->Write(cutNames[i]);
-
-      MuPTheta_CutImpact->cd();
-      hCut_MuPTheta[i]->Write(cutNames[i]);
-      MuPPhi_CutImpact->cd();
-      hCut_MuPPhi[i]->Write(cutNames[i]);
-      MuPqP_CutImpact->cd();
-      hCut_MuPqP[i]->Write(cutNames[i]);
-
-      MuMTheta_CutImpact->cd();
-      hCut_MuMTheta[i]->Write(cutNames[i]);
-      MuMPhi_CutImpact->cd();
-      hCut_MuMPhi[i]->Write(cutNames[i]);
-      MuMqP_CutImpact->cd();
-      hCut_MuMqP[i]->Write(cutNames[i]);
-
-      xN_CutImpact->cd();
-      hCut_xN[i]->Write(cutNames[i]);
-      xPi_CutImpact->cd();
-      hCut_xPi[i]->Write(cutNames[i]);
-      xF_CutImpact->cd();
-      hCut_xF[i]->Write(cutNames[i]);
-      qT_CutImpact->cd();
-      hCut_qT[i]->Write(cutNames[i]);
-    }
-
     cout << myFile->GetName() << " was written" << endl;
     myFile->Close();
   }
+  // }}}
 
   theApp.Run();//Needed to make root graphics work on C++
 }//main
