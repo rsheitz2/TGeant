@@ -114,6 +114,10 @@ int main(int argc, char **argv){
     TString dy_type = "";
     Int_t xval = 1;
     ifstream f_bins(binFile);
+    if(!f_bins.is_open() ) {
+      cout << " " << endl;
+      cout << "binFile: " << binFile << " did not open" << endl;
+      exit(EXIT_FAILURE); }
     while (!f_bins.eof()) {
       getline(f_bins,line);
 
@@ -615,7 +619,7 @@ int main(int argc, char **argv){
 		    "MuP_PxPy"); ih++;
   Hist2D_ArraySetupMC(hCut_MuM_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
 		    "MuM_PxPy"); ih++;
-  Hist2D_ArraySetupMC(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -5, 5, 100,-5,5,ih,
+  Hist2D_ArraySetupMC(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -1, 1, 100,-1,1,ih,
 		    "Beam_PxPy"); ih++;
 
   
