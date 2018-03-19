@@ -561,8 +561,9 @@ int main(int argc, char **argv){
 
   
   //Cut histograms
-  const Int_t nCutHist = 12;//Number of impact cut hist
-  //const Int_t nMCCuts = 5//src/setup.h
+  const Int_t nCutHist = 13;//Number of impact cut hist
+  const Int_t nCutHist_inNH3 = 2;//Spin dependent cuts
+  //const Int_t nMCCuts = 6//src/setup.h
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
 
@@ -570,10 +571,11 @@ int main(int argc, char **argv){
   TH1D *hCut_MuPTheta[nMCCuts],*hCut_MuPPhi[nMCCuts],*hCut_MuPqP[nMCCuts];
   TH1D *hCut_MuMTheta[nMCCuts],*hCut_MuMPhi[nMCCuts],*hCut_MuMqP[nMCCuts];
   TH1D *hCut_xN[nMCCuts], *hCut_xPi[nMCCuts], *hCut_xF[nMCCuts];
-  TH1D *hCut_qT[nMCCuts], *hCut_PhiPhoton[nMCCuts];
-  TH1D *hCut_PhiS[nMCCuts], *hCut_PhiS_simple[nMCCuts];
+  TH1D *hCut_qT[nMCCuts];
+  TH1D *hCut_PhiPhoton[nMCCuts], *hCut_PhiPhoton_gen[nMCCuts];
+  TH1D *hCut_PhiS_simple[nMCCuts], *hCut_PhiS_simple_gen[nMCCuts];
 
-  TH1D *hImpactCuts[nCutHist+2][nMCCuts];
+  TH1D *hImpactCuts[nCutHist+nCutHist_inNH3][nMCCuts];
 
   Int_t ih = 0;
   HistArraySetupMC(hCut_VxZ, hImpactCuts, 500, -500, 100, ih, "VxZ"); ih++;
@@ -591,9 +593,16 @@ int main(int argc, char **argv){
   HistArraySetupMC(hCut_xPi, hImpactCuts, 100, 0, 1, ih, "xPi"); ih++;
   HistArraySetupMC(hCut_xF, hImpactCuts, 200, -1, 1, ih, "xF"); ih++;
   HistArraySetupMC(hCut_qT, hImpactCuts, 200, 0, 5, ih, "qT"); ih++;
-  HistArraySetupMC(hCut_PhiPhoton, hImpactCuts, 200, 0, 5, ih,"PhiPhoton");ih++;
-  HistArraySetupMC(hCut_PhiS, hImpactCuts, 200, 0, 5, ih,"PhiS");ih++;
-  HistArraySetupMC(hCut_PhiS_simple, hImpactCuts,200,0,5,ih,"PhiS_simple");ih++;
+  HistArraySetupMC(hCut_PhiPhoton, hImpactCuts, 200, -TMath::Pi(), TMath::Pi(),
+		   ih,"PhiPhoton");ih++;
+  HistArraySetupMC(hCut_PhiPhoton_gen, hImpactCuts,
+		   200, -TMath::Pi(), TMath::Pi(),
+		   ih,"PhiPhoton_gen");ih++;
+  HistArraySetupMC(hCut_PhiS_simple, hImpactCuts, 200, -TMath::Pi(),TMath::Pi(),
+		   ih, "PhiS_simple"); ih++;
+  HistArraySetupMC(hCut_PhiS_simple_gen, hImpactCuts,
+		   200, -TMath::Pi(),TMath::Pi(),
+		   ih, "PhiS_simple_gen"); ih++;
 
   
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
@@ -710,69 +719,124 @@ int main(int argc, char **argv){
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
 
+
+    ///////////////General useful quantities and Compass/TF frame setups
+    // {{{
+    //Compass frame:
     TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
     TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
+    TLorentzVector lv_beam(beam_X, beam_Y, beam_Z, beam_E);
+    TLorentzVector lv_target(0, 0, 0, M_proton);
+    TLorentzVector lv_Spin(0, 1.0, 0, 0);//same as Spin_simple now
+    TLorentzVector lv_Spin_simple(0, 1.0, 0, 0);
     TLorentzVector lv_diMu = lv_p1_Mu + lv_p2_Mu;
-    TLorentzVector lv_target_1 (0, 0, 0, M_proton);
+
+    TLorentzVector lv_Gen_muPlus(vMCtr1_X, vMCtr1_Y, vMCtr1_Z, vMCtr1_E);
+    TLorentzVector lv_Gen_muMinus(vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E);
+    TLorentzVector lv_Gen_beam(vMCtrIn_X, vMCtrIn_Y, vMCtrIn_Z,
+			       vMCtrIn_E);
+    TLorentzVector lv_Gen_virtualPhoton = lv_Gen_muPlus + lv_Gen_muMinus;
+
+    //Target frame:
+    TLorentzVector lv_beam_TF(lv_beam);
+    TLorentzVector lv_target_TF(lv_target);
+    TLorentzVector lv_Spin_TF(lv_Spin);
+    TLorentzVector lv_Spin_simple_TF(lv_Spin_simple);
+    TLorentzVector lv_muPlus_TF(lv_p1_Mu);
+    TLorentzVector lv_muMinus_TF(lv_p2_Mu);
+    TLorentzVector lv_virtualPhoton_TF(lv_diMu);
+
+    TLorentzVector lv_Gen_beam_TF(lv_Gen_beam);
+    TLorentzVector lv_Gen_target_TF(lv_target);
+    TLorentzVector lv_Gen_Spin_TF(lv_Spin);
+    TLorentzVector lv_Gen_Spin_simple_TF(lv_Spin_simple);
+    TLorentzVector lv_Gen_muPlus_TF(lv_Gen_muPlus);
+    TLorentzVector lv_Gen_muMinus_TF(lv_Gen_muMinus);
+    TLorentzVector lv_Gen_virtualPhoton_TF(lv_Gen_virtualPhoton);
 
     Double_t cut_variables[nCutHist] = {vx_z, theta_traj1,
 					phi_traj1, qP_traj1, theta_traj2,
 					phi_traj2,
 					qP_traj2, x_beam, x_target,
-					x_feynman, q_transverse, lv_diMu.Phi()};
+					x_feynman, q_transverse, lv_diMu.Phi(),
+					lv_Gen_virtualPhoton.Phi() };
 
     Bool_t inNH3 = ( (vx_z>-294.5 && vx_z<-239.3) ||
 		     (vx_z>-219.5 && vx_z<-164.3) ) ? true : false;
     
     Int_t icut = 0;
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+    // }}}
+    
 
+    //Perform Cuts
+    // {{{
     if (physKinematics && (x_beam < 0.0 || x_beam > 1.0) ) continue;
     if (physKinematics && (x_target < 0.0 || x_target > 1.0) ) continue;
     if (physKinematics && (x_feynman < -1.0 || x_feynman > 1.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
+    if (inNH3){
+      align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
+			  lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
+			  lv_muMinus_TF);
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+
+      align_wrt_beam_photon(lv_Gen_beam_TF, lv_Gen_target_TF, lv_Gen_Spin_TF,
+			  lv_Gen_Spin_simple_TF, lv_Gen_virtualPhoton_TF,
+			  lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);
+      hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );
+    }
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if (qTcut && (q_transverse < 0.4 || q_transverse > 5.0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//qT cuts
+    if (inNH3){
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if (vxZ_NH3 && (vx_z < -294.5 || vx_z > -239.3) &&
 	(vx_z < -219.5 || vx_z > -164.3)
 	) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target z-cut
+    if (inNH3){
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
     
     if(rad_NH3 && (TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >=
 		   TMath::Power(1.9, 2) ) ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target radial cut
+    if (inNH3){
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
-        
-    ////All data after cuts
-    //////////////
-    ///////////////General useful quantities
-    Double_t beam[] = {beam_X, beam_Y, beam_Z, beam_E};
-    Double_t target[] = {M_proton};
-    Double_t muPlus[] = {vP1_X, vP1_Y, vP1_Z, vP1_E};
-    Double_t muMinus[] = {vP2_X, vP2_Y, vP2_Z, vP2_E};
-    Double_t virtualPhoton[] = {vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E};
-    TLorentzVector lv_photon_main(vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E);
-    TLorentzVector lv_beam_main(beam_X, beam_Y, beam_Z, beam_E);
 
     if (gen_trIn_Z && (vMCtrIn_Z < 0) ) vMCtrIn_Z = -vMCtrIn_Z;
     else continue;//Don't know what positive pInZ stuff is
+    hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Positive Pz Pion
+    if (inNH3){
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );
+    }
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+
     if (gen_tr1_tr2 &&
 	(vMCtr1_X < -200 || vMCtr2_X < -200 || vMCtrIn_X < -200) ) continue;
     if (gen_tr1_tr2 &&
 	(vMCtr1_Y < -200 || vMCtr2_Y < -200 || vMCtrIn_Y < -200) ) continue;
     if (gen_tr1_tr2 &&
 	(vMCtr1_Z < -200 || vMCtr2_Z < -200 || vMCtrIn_Z < -200) ) continue;
+    hCuts->Fill(cut_bin-1); cut_bin += cut_space;//tr1/tr2 physical momentum
+    if (inNH3){
+      hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );}
+    FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
+    // }}}
     
-    Double_t Gen_beam[] = {vMCtrIn_X, vMCtrIn_Y, vMCtrIn_Z, vMCtrIn_E};
-    Double_t Gen_muPlus[] = {vMCtr1_X, vMCtr1_Y, vMCtr1_Z, vMCtr1_E};
-    Double_t Gen_muMinus[] = {vMCtr2_X, vMCtr2_Y, vMCtr2_Z, vMCtr2_E};
-    //Int_t period = -1;//period 1 defined as upstream up, downstream down
-
+        
+    ////All data after cuts
+    //////////////
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
       //if (vx_z <= -230){//No target cuts
       Spin = 1.0;
@@ -796,49 +860,19 @@ int main(int argc, char **argv){
     ///////////////
     // {{{
     //Compass frame:
-    TLorentzVector lv_beam(beam[0], beam[1], beam[2], beam[3]);
-    TLorentzVector lv_target(0, 0, 0, target[0]);
-    TLorentzVector lv_Spin(0, Spin, 0, 0);
-    TLorentzVector lv_Spin_simple(0, 1.0, 0, 0);
-    TLorentzVector lv_muPlus(muPlus[0], muPlus[1], muPlus[2], muPlus[3]);
-    TLorentzVector lv_muMinus(muMinus[0], muMinus[1], muMinus[2], muMinus[3]);
-    TLorentzVector lv_virtualPhoton(virtualPhoton[0], virtualPhoton[1],
-				    virtualPhoton[2], virtualPhoton[3]);
-
-    TLorentzVector lv_Gen_beam(Gen_beam[0], Gen_beam[1], Gen_beam[2],
-			       Gen_beam[3]);
-    TLorentzVector lv_Gen_muPlus(Gen_muPlus[0], Gen_muPlus[1], Gen_muPlus[2],
-				 Gen_muPlus[3]);
-    TLorentzVector lv_Gen_muMinus(Gen_muMinus[0], Gen_muMinus[1],
-				  Gen_muMinus[2], Gen_muMinus[3]);
-    TLorentzVector lv_Gen_virtualPhoton = lv_Gen_muPlus + lv_Gen_muMinus;
     gen_vPhoton_X = lv_Gen_virtualPhoton.X();
     gen_vPhoton_Y = lv_Gen_virtualPhoton.Y();
     gen_vPhoton_Z = lv_Gen_virtualPhoton.Z();
     gen_vPhoton_E = lv_Gen_virtualPhoton.E();
-
+    
     //Target frame:
-    TLorentzVector lv_beam_TF(lv_beam);
-    TLorentzVector lv_target_TF(lv_target);
-    TLorentzVector lv_Spin_TF(lv_Spin);
-    TLorentzVector lv_Spin_simple_TF(lv_Spin_simple);
-    TLorentzVector lv_muPlus_TF(lv_muPlus);
-    TLorentzVector lv_muMinus_TF(lv_muMinus);
-    TLorentzVector lv_virtualPhoton_TF(lv_virtualPhoton);
-    align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
+    //Performed after Physical Kinematics cut
+    /*align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
 			  lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
 			  lv_muMinus_TF);
-
-    TLorentzVector lv_Gen_beam_TF(lv_Gen_beam);
-    TLorentzVector lv_Gen_target_TF(lv_target);
-    TLorentzVector lv_Gen_Spin_TF(lv_Spin);
-    TLorentzVector lv_Gen_Spin_simple_TF(lv_Spin_simple);
-    TLorentzVector lv_Gen_muPlus_TF(lv_Gen_muPlus);
-    TLorentzVector lv_Gen_muMinus_TF(lv_Gen_muMinus);
-    TLorentzVector lv_Gen_virtualPhoton_TF(lv_Gen_virtualPhoton);
     align_wrt_beam_photon(lv_Gen_beam_TF, lv_Gen_target_TF, lv_Gen_Spin_TF,
 			  lv_Gen_Spin_simple_TF, lv_Gen_virtualPhoton_TF,
-			  lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);
+			  lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);*/
     
     
     //Boost from TF to CS
@@ -864,12 +898,12 @@ int main(int argc, char **argv){
 	     lv_Gen_muMinus_CS);
     // }}}
 
-
-    Double_t PhiS_lab = lv_Spin.Phi() - lv_virtualPhoton.Phi();
+    
+    Double_t PhiS_lab = lv_Spin.Phi() - lv_diMu.Phi();
     if(PhiS_lab > TMath::Pi()) PhiS_lab = -2*TMath::Pi() + PhiS_lab;
     else if (PhiS_lab < -1.0*TMath::Pi() ) PhiS_lab = 2*TMath::Pi() + PhiS_lab;
-    PhiS = lv_Spin_TF.Phi();
-    xPhiS_simple = lv_Spin_simple_TF.Phi();
+    PhiS = lv_Spin_TF.Phi();//same as PhiS_simple
+    PhiS_simple = lv_Spin_simple_TF.Phi();
     Phi_CS = lv_muMinus_CS.Phi();
     Theta_CS = lv_muMinus_CS.Theta();
 
@@ -887,7 +921,8 @@ int main(int argc, char **argv){
 
   //Cuts histogram
   TString cutNames[nMCCuts] = {"AllData", "xPion,xN,xF", "0.4<qT<5",
-			       "TargetZ-cut", "TargetRadius"};
+			       "TargetZ-cut", "TargetRadius", "Positive_Pz_In",
+			       "Physical_Pxyz_tr1_tr2"};
   for (Int_t i=0, j=1; i<nMCCuts; i++, j+=cut_space){
     Int_t bin_index = hCuts->GetXaxis()->FindBin(j);
     hCuts->GetXaxis()->SetBinLabel(bin_index, cutNames[i]);
@@ -926,6 +961,10 @@ int main(int argc, char **argv){
     TDirectory *xPi_CutImpact = myFile->mkdir("xPi_CutImpact");
     TDirectory *xF_CutImpact = myFile->mkdir("xF_CutImpact");
     TDirectory *qT_CutImpact = myFile->mkdir("qT_CutImpact");
+    TDirectory *PhiPhoton_CutImpact = myFile->mkdir("PhiPhoton_CutImpact");
+    TDirectory *PhiPhoton_gen_CutImpact=myFile->mkdir("PhiPhoton_gen_CutImpact");
+    TDirectory *PhiS_simple_CutImpact = myFile->mkdir("PhiS_simple_CutImpact");
+    TDirectory *PhiS_simple_gen_CutImpact=myFile->mkdir("PhiS_simple_gen_CutImpact");
     for (Int_t i=0; i<nMCCuts; i++) {
       VxZ_CutImpact->cd();
       hCut_VxZ[i]->Write(cutNames[i]);
@@ -952,6 +991,15 @@ int main(int argc, char **argv){
       hCut_xF[i]->Write(cutNames[i]);
       qT_CutImpact->cd();
       hCut_qT[i]->Write(cutNames[i]);
+      
+      PhiPhoton_CutImpact->cd();
+      hCut_PhiPhoton[i]->Write(cutNames[i]);
+      PhiPhoton_gen_CutImpact->cd();
+      hCut_PhiPhoton_gen[i]->Write(cutNames[i]);
+      PhiS_simple_CutImpact->cd();
+      hCut_PhiS_simple[i]->Write(cutNames[i]);
+      PhiS_simple_gen_CutImpact->cd();
+      hCut_PhiS_simple_gen[i]->Write(cutNames[i]);
     }
 
     cout << myFile->GetName() << " was written" << endl;

@@ -2,7 +2,7 @@
 #define SETUP_H
 
 const Int_t nRealCuts = 7;//Number of cuts made
-const Int_t nMCCuts = 5;//Number of cuts made
+const Int_t nMCCuts = 7;//Number of cuts made
 
 void HistArraySetupReal(TH1D **hist, TH1D *hCut[][nRealCuts], Int_t nBins,
 		   Double_t min,
