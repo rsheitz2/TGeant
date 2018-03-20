@@ -265,6 +265,14 @@ int main(int argc, char **argv){
   rad_bounds.push_back(1.9);
   vxZ_upstream_bounds.push_back(-239.3);
   vxZ_downstream_bounds.push_back(-164.3);
+  if(xN_xval.size()==0 || xPi_xval.size()==0 || xF_xval.size()==0 ||
+     pT_xval.size()==0 || M_xval.size()==0 || rad_xval.size()==0 ||
+     vxZ_upstream_xval.size()==0 || vxZ_downstream_xval.size()==0){
+    cout << "Error:" << endl;
+    cout << "Modern xval values not specifed in " << binFile << endl;
+    cout << " " << endl;
+    exit(EXIT_FAILURE);
+  }
 
   if (!Mflag || massRange=="HM") M_bounds.push_back(8.5);//High mass
   else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
@@ -459,7 +467,6 @@ int main(int argc, char **argv){
   vector<Double_t> AvgPol_vxZ_upstream_Down(nBins, 0.0), AvgDil_vxZ_upstream_Down(nBins, 0.0);
   vector<Int_t> AvgPol_vxZ_count_UpStream_Down(nBins, 0), AvgDil_vxZ_count_UpStream_Down(nBins, 0);
 
-  
   vector<Double_t> AvgPol_vxZ_downstream(nBins, 0.0), AvgDil_vxZ_downstream(nBins, 0.0);
   vector<Int_t> AvgPol_vxZ_count_DownStream(nBins, 0), AvgDil_vxZ_count_DownStream(nBins, 0);
 
@@ -693,6 +700,7 @@ int main(int argc, char **argv){
   //Cut histograms
   ///////////////
   // {{{
+
   const Int_t nCutHist = 12;//Number of impact cut hist
   const Int_t nCutHist_inNH3 = 2;//Spin dependent cuts
   //const Int_t nRealCuts = 7;//Number of cuts made (setup.h)
@@ -744,15 +752,20 @@ int main(int argc, char **argv){
 		    "MuM_PxPy"); ih++;
   Hist2D_ArraySetupReal(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -5, 5, 100,-5,5,ih,
 		    "Beam_PxPy"); ih++;
+  // }}}
 
+  //pT_Weighted tree
+  ///////////////
+  // {{{
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
-  Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS;
+  Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS, rapidity;
   Int_t targetPosition;
   Double_t Spin[7];
   tree->Branch("PhiS", &PhiS, "PhiS/D");
   tree->Branch("PhiS_simple", &PhiS_simple, "PhiS_simple/D");
   tree->Branch("Phi_CS", &Phi_CS, "Phi_CS/D");
   tree->Branch("Theta_CS", &Theta_CS, "Theta_CS/D");
+  tree->Branch("rapidity", &rapidity, "rapidity/D");
   tree->Branch("MasterTrigMask", &MasterTrigMask, "MasterTrigMask/I");
   tree->Branch("trigMask", &trigMask, "trigMask/I");
   tree->Branch("x_beam", &x_beam, "x_beam/D");
@@ -800,6 +813,7 @@ int main(int argc, char **argv){
   tree->Branch("HG02_y2_p1y", &HG02_y2_p1y, "HG02_y2_p1y/D");
   tree->Branch("HG02_y2_p2x", &HG02_y2_p2x, "HG02_y2_p2x/D");
   tree->Branch("HG02_y2_p2y", &HG02_y2_p2y, "HG02_y2_p2y/D");
+
   // }}}
 
   //Cuts (Turn on/off)
@@ -1232,6 +1246,7 @@ int main(int argc, char **argv){
     PhiS_simple = lv_Spin_simple_TF.Phi();
     Phi_CS = lv_muMinus_CS.Phi();
     Theta_CS = lv_muMinus_CS.Theta();
+    rapidity = 0.5*TMath::Log(x_beam/x_target);
 
     //Average
     AvgPolarization += TMath::Abs(Polarization);

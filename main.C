@@ -621,11 +621,14 @@ int main(int argc, char **argv){
 		    "MuM_PxPy"); ih++;
   Hist2D_ArraySetupMC(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -1, 1, 100,-1,1,ih,
 		    "Beam_PxPy"); ih++;
+  // }}}
 
-  
+  //pT_Weighted tree
+  ///////////////
+  // {{{
   TTree *tree = new TTree("pT_Weighted", "pT_Weighted");
-  Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS;
-  Double_t Gen_PhiS, Gen_PhiS_simple, Gen_Phi_CS, Gen_Theta_CS;
+  Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS, rapidity;
+  Double_t Gen_PhiS, Gen_PhiS_simple, Gen_Phi_CS, Gen_Theta_CS, Gen_rapidity;
   Double_t gen_vPhoton_X, gen_vPhoton_Y, gen_vPhoton_Z, gen_vPhoton_E;
   Int_t targetPosition;
   Double_t Spin;
@@ -633,10 +636,12 @@ int main(int argc, char **argv){
   tree->Branch("PhiS_simple", &PhiS_simple, "PhiS_simple/D");
   tree->Branch("Phi_CS", &Phi_CS, "Phi_CS/D");
   tree->Branch("Theta_CS", &Theta_CS, "Theta_CS/D");
+  tree->Branch("rapidity", &rapidity, "rapidity/D");
   tree->Branch("Gen_PhiS", &Gen_PhiS, "Gen_PhiS/D");
   tree->Branch("Gen_PhiS_simple", &Gen_PhiS_simple, "Gen_PhiS_simple/D");
   tree->Branch("Gen_Phi_CS", &Gen_Phi_CS, "Gen_Phi_CS/D");
   tree->Branch("Gen_Theta_CS", &Gen_Theta_CS, "Gen_Theta_CS/D");
+  tree->Branch("Gen_rapidity", &Gen_rapidity, "Gen_rapidity/D");
   tree->Branch("trigMask", &trigMask, "trigMask/I");
   tree->Branch("vPhoton_X", &vPhoton_X, "vPhoton_X/D");
   tree->Branch("vPhoton_Y", &vPhoton_Y, "vPhoton_Y/D");
@@ -934,11 +939,13 @@ int main(int argc, char **argv){
     PhiS_simple = lv_Spin_simple_TF.Phi();
     Phi_CS = lv_muMinus_CS.Phi();
     Theta_CS = lv_muMinus_CS.Theta();
+    rapidity = 0.5*TMath::Log(x_beam/x_target);
 
     Gen_PhiS = lv_Gen_Spin_TF.Phi();
     Gen_PhiS_simple = lv_Gen_Spin_simple_TF.Phi();
     Gen_Phi_CS = lv_muMinus_CS.Phi();
     Gen_Theta_CS = lv_muMinus_CS.Theta();
+    Gen_rapidity = 0.5*TMath::Log(MC_x_beam/MC_x_target);
 
     tree->Fill();
   }//tree entries    
