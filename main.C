@@ -742,7 +742,6 @@ int main(int argc, char **argv){
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
 
-
     ///////////////General useful quantities and Compass/TF frame setups
     // {{{
     //Compass frame:
@@ -844,8 +843,7 @@ int main(int argc, char **argv){
     Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
     FillCutsMC(hImpactCuts, cut_variables, icut, nCutHist); icut++;
 
-    if (gen_trIn_Z && (vMCtrIn_Z < 0) ) vMCtrIn_Z = -vMCtrIn_Z;
-    else continue;//Don't know what positive pInZ stuff is
+    if (gen_trIn_Z && (vMCtrIn_Z < 0) ) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Positive Pz Pion
     if (inNH3){
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
@@ -943,8 +941,8 @@ int main(int argc, char **argv){
 
     Gen_PhiS = lv_Gen_Spin_TF.Phi();
     Gen_PhiS_simple = lv_Gen_Spin_simple_TF.Phi();
-    Gen_Phi_CS = lv_muMinus_CS.Phi();
-    Gen_Theta_CS = lv_muMinus_CS.Theta();
+    Gen_Phi_CS = lv_Gen_muMinus_CS.Phi();
+    Gen_Theta_CS = lv_Gen_muMinus_CS.Theta();
     Gen_rapidity = 0.5*TMath::Log(MC_x_beam/MC_x_target);
 
     tree->Fill();

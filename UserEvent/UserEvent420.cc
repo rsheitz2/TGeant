@@ -450,7 +450,8 @@ void UserEvent420(PaEvent& e){
 	  const PaMCtrack& MCtrIn = e.vMCtrack(trIn.iMCtrack() );
 	  TLorentzVector lv_MCtr1 = MCtr1.LzVec();
 	  TLorentzVector lv_MCtr2 = MCtr2.LzVec();
-	  TLorentzVector lv_MCtrIn = MCtrIn.LzVec();
+	  TLorentzVector lv_MCtrIn( -MCtrIn.P(0), -MCtrIn.P(1), -MCtrIn.P(2),
+				    MCtrIn.E() );//generated info saves neg mom
 
 	  TLorentzVector lv_MCdiMu = lv_MCtr1 + lv_MCtr2;
 	  MC_x_beam = lv_MCdiMu.Mag2()/(2*lv_MCdiMu.Dot(lv_MCtrIn) );
