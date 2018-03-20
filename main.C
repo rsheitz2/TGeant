@@ -581,8 +581,8 @@ int main(int argc, char **argv){
   TH1D *hCut_PhiPhoton[nMCCuts], *hCut_PhiPhoton_gen[nMCCuts];
   TH1D *hCut_PhiS_simple[nMCCuts], *hCut_PhiS_simple_gen[nMCCuts];
 
-  TH2D *hCut_MuP_PxPy[nRealCuts], *hCut_MuM_PxPy[nRealCuts];
-  TH2D *hCut_Beam_PxPy[nRealCuts];
+  TH2D *hCut_MuP_PxPy[nMCCuts], *hCut_MuM_PxPy[nMCCuts];
+  TH2D *hCut_Beam_PxPy[nMCCuts];
 
   TH1D *hImpactCuts[nCutHist+nCutHist_inNH3][nMCCuts];
   TH2D *h2D_ImpactCuts[n2D_cutHist][nMCCuts];
