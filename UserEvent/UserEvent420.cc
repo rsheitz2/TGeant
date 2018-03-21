@@ -25,6 +25,7 @@ void UserEvent420(PaEvent& e){
   //////////////////////////////////////
   //Setup globally in dy_variables.h
   static Bool_t isMonteCarlo;
+  static Bool_t isHighMass=false, isJPsiMass=false;
   static Double_t SM1_p1x, SM1_p1y, SM1_p2x, SM1_p2y;
   static Double_t SM2_p1x, SM2_p1y, SM2_p2x, SM2_p2y;
   static Double_t HG01_p1x, HG01_p1y, HG02_y1_p1x, HG02_y1_p1y;
@@ -52,11 +53,40 @@ void UserEvent420(PaEvent& e){
   if (first){
     Phast::Ref().HistFileDir("UserEvent420");
 
+    if (Phast::Ref().NUserFlag() == 0) {
+      cout << " " << endl;
+      cout << " " << endl;
+      cout << "No -U option provided" << endl;
+      cout << "Please specify -U20 for MC or -U10 real data" << endl;
+      cout << " " << endl;
+      exit(EXIT_FAILURE);
+    }
     if (Phast::Ref().UserFlag(0) == 20) isMonteCarlo = true;
     else if (Phast::Ref().UserFlag(0) == 10) isMonteCarlo = false;
     else {
       cout << " " << endl;
-      cout << "Please specify -U20 for MC or -U real data" << endl;
+      cout << " " << endl;
+      cout << "Invalid -U option given" << endl;
+      cout << "Please specify -U20 for MC or -U10 real data" << endl;
+      cout << " " << endl;
+      exit(EXIT_FAILURE);
+    }
+
+    if (Phast::Ref().NTextUserFlag() == 0){
+      cout << " " << endl;
+      cout << " " << endl;
+      cout << "No -T option given" << endl;
+      cout << "Please specify -TmassRange (\"HM\", \"JPsi\")" << endl;
+      cout << " " << endl;
+      exit(EXIT_FAILURE);
+    }
+    else if (Phast::Ref().TextUserFlag(0) == "HM") isHighMass = true;
+    else if (Phast::Ref().TextUserFlag(0) == "JPsi") isJPsiMass = true;
+    else {
+      cout << " " << endl;
+      cout << " " << endl;
+      cout << "Invalid -T option given" << endl;
+      cout << "Please specify -TmassRange (\"HM\", \"JPsi\")" << endl;
       cout << " " << endl;
       exit(EXIT_FAILURE);
     }
@@ -289,8 +319,8 @@ void UserEvent420(PaEvent& e){
       else if (lv_diMu.M() > 4.3 && lv_diMu.M() <= 8.5) i_mHist = 33;
       else i_mHist = 34;
 
-      //if (i_mHist != 33) continue;//Mass [4.3, 8.5]
-      if (i_mHist != 32) continue;//Mass [4.3, 8.5]
+      if (isHighMass && i_mHist != 33) continue;//Mass [4.3, 8.5]
+      else if (isJPsiMass && i_mHist != 32) continue;//Mass [4.3, 8.5]
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
@@ -380,9 +410,9 @@ void UserEvent420(PaEvent& e){
 
       //Beam decay cut
       /*if (TMath::Abs(traj_p1.qP() ) + TMath::Abs(traj_p2.qP() )
-	  > 190.0) continue;
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      FillCuts(hCuts, cut_variables, icut); icut++;*/
+	> 190.0) continue;
+	h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
+	FillCuts(hCuts, cut_variables, icut); icut++;*/
 
       //Trigger validation
       Bool_t trigValidation = false;
@@ -458,7 +488,7 @@ void UserEvent420(PaEvent& e){
 	  MC_x_target = lv_MCdiMu.Mag2()/(2*lv_MCdiMu.Dot(lv_target) );
 	  MC_x_feynman = MC_x_beam - MC_x_target;
 	  MC_q_transverse = lv_MCdiMu.Vect().Cross(lv_MCtrIn.Vect() ).Mag()
-						/(lv_MCtrIn.Vect().Mag() );
+	    /(lv_MCtrIn.Vect().Mag() );
 
 	  AssignMCtrack(MCtr1, MCtr2, MCtrIn);
 
@@ -570,7 +600,6 @@ void UserEvent420(PaEvent& e){
 	HG02_y2_p2x = -999.9;
 	HG02_y2_p2y = -999.9;
       }
-
 
       Particles->Fill();
     }//p2 loop

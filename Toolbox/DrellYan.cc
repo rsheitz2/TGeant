@@ -47,44 +47,6 @@ void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target, TLorent
   lepton2.SetY(lepton2_3.Dot(jhat) );
   lepton2.SetZ(lepton2_3.Dot(khat) );
 
-}//align_wrt_beam_photon//*/
-
-void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target, TLorentzVector& Spin,
-			   TLorentzVector& lepton1, TLorentzVector& lepton2){
-
-  TLorentzVector virtual_photon = lepton1 + lepton2;
-  //Beam angles of rotation
-  Double_t beam_azimuthal = beam.Phi();
-  Double_t beam_polar = beam.Theta();
-  
-  //Rotate about azimuthal beam angle (only needed to ensure next rotation is about the Yaxis)
-  //Another approach would be to find angle perpendicular to z-axis and beam momentum 
-  //       and rotate by beam_polar about this angle
-  beam.RotateZ(-beam_azimuthal);
-  target.RotateZ(-beam_azimuthal);
-  Spin.RotateZ(-beam_azimuthal);
-  virtual_photon.RotateZ(-beam_azimuthal);
-  lepton1.RotateZ(-beam_azimuthal);
-  lepton2.RotateZ(-beam_azimuthal);
-
-  //Rotate about polar angle
-  beam.RotateY(-beam_polar);
-  target.RotateY(-beam_polar);
-  Spin.RotateY(-beam_polar);
-  virtual_photon.RotateY(-beam_polar);
-  lepton1.RotateY(-beam_polar);
-  lepton2.RotateY(-beam_polar);
-
-  //Virtual photon azimuthal angle when z-axis is aligned with the beam
-  Double_t vPhoton_azimuthal = virtual_photon.Phi();
-
-  //Rotate about azimuthal angle of virtual photon
-  beam.RotateZ(-vPhoton_azimuthal);
-  target.RotateZ(-vPhoton_azimuthal);
-  Spin.RotateZ(-vPhoton_azimuthal);
-  lepton1.RotateZ(-vPhoton_azimuthal);
-  lepton2.RotateZ(-vPhoton_azimuthal);
-
 }//align_wrt_beam_photon
 
 
@@ -160,9 +122,10 @@ private:
   Double_t muM_X, muM_Y, muM_Z, muM_E;
   //Vertex specific
   Double_t vx_z, vx_y, vx_x;
+  Int_t targetPosition;
   //Virtual photon specific/Dimuon
   Double_t vPhoton_X, vPhoton_Y, vPhoton_Z, vPhoton_E;
-  Double_t vPhoton_M;
+  Double_t Mmumu;
   Double_t vOpenAngle;
   //Beam pion trajectory parameters at vertex
   Double_t phi_pIn, theta_pIn;
@@ -228,12 +191,13 @@ void DrellYan::beginOfEvents(void)
   Event->Branch("vx_z", &vx_z, "vx_z/D");
   Event->Branch("vx_x", &vx_x, "vx_x/D");
   Event->Branch("vx_y", &vx_y, "vx_y/D");
+  Event->Branch("targetPosition", &targetPosition, "targetPosition/I");
   //Virtual photon specific/Dimuon
   Event->Branch("vPhoton_X", &vPhoton_X, "vPhoton_X/D");
   Event->Branch("vPhoton_Y", &vPhoton_Y, "vPhoton_Y/D");
   Event->Branch("vPhoton_Z", &vPhoton_Z, "vPhoton_Z/D");
   Event->Branch("vPhoton_E", &vPhoton_E, "vPhoton_E/D");
-  Event->Branch("vPhoton_M", &vPhoton_M, "vPhoton_M/D");
+  Event->Branch("Mmumu", &Mmumu, "Mmumu/D");
   Event->Branch("vOpenAngle", &vOpenAngle, "vOpenAngle/D");
   //Beam pion trajectory parameters at vertex
   Event->Branch("phi_pIn", &phi_pIn, "phi_pIn/D");
@@ -243,6 +207,11 @@ void DrellYan::beginOfEvents(void)
   Event->Branch("pIn_Y", &pIn_Y, "pIn_Y/D");
   Event->Branch("pIn_Z", &pIn_Z, "pIn_Z/D");
   Event->Branch("pIn_E", &pIn_E, "pIn_E/D");
+  //Drell-Yan Angles
+  Event->Branch("PhiS", &PhiS, "PhiS/D");
+  Event->Branch("PhiS_simple", &PhiS_simple, "PhiS_simple/D");
+  Event->Branch("Phi_CS", &Phi_CS, "Phi_CS/D");
+  Event->Branch("Theta_CS", &Theta_CS, "Theta_CS/D");
   //DY-variables
   Event->Branch("x_beam", &x_beam, "x_beam/D");
   Event->Branch("x_target", &x_target, "x_target/D");
@@ -265,10 +234,6 @@ bool DrellYan::processEvent(T4Event* event)
   // (only if -o is activated)
   Double_t M_proton = 0.938272;
 
-  //cout << event->printEventInfo() << endl;
-  //event->printEventInfo();
-  //event->printBeamData();
-
   vx_x = event->beamData.vertexPosition[0]/10.0;
   vx_y = event->beamData.vertexPosition[1]/10.0;
   vx_z = event->beamData.vertexPosition[2]/10.0;
@@ -288,7 +253,7 @@ bool DrellYan::processEvent(T4Event* event)
   TLorentzVector pIn;
   TLorentzVector target;
   Bool_t hasMuP=false, hasMuM=false, hasMuBeam=false, hasMuTar=false;
-  nPion = 0; nProton = 0; nNeutron = 0; nMuP = 0; nMuM = 0;
+  nPion = 0; nProton = 0; nNeutron=0; nMuP = 0; nMuM = 0;
   for (vector<T4BeamParticle>::iterator it=vBeam.begin(); it!=vBeam.end(); it++){
     if (it->k[1] == 13 ) {
       muP.SetX(it->p[0]);
@@ -317,13 +282,13 @@ bool DrellYan::processEvent(T4Event* event)
 
       nProton++;
     }
-    else if (it->k[1] == 2112 && it->k[0] == -12 ){//neutron
+    else if (it->k[1] == 2112 && it->k[0] == -12) {//target neutron
       target.SetX(it->p[0]);
       target.SetY(it->p[1]);
       target.SetZ(it->p[2]);
       target.SetE(it->p[3]);
       hasMuTar = true;
-      
+
       nNeutron++;
     }
     else if (it->k[1] == -211 && it->k[0] == -12) {//pion
@@ -405,13 +370,16 @@ bool DrellYan::processEvent(T4Event* event)
   muM_Z = muM.Z();
   muM_E = muM.E();
   //Vertex specific  //Defined previously
+  if (vx_z <= -239.3 && vx_z >= -294.5) targetPosition = 0;
+  else if (vx_z <= -164.3 && vx_z >= -219.5) targetPosition = 1;
+  else targetPosition = -1;
   
   //Virtual photon specific/Dimuon
   vPhoton_X = diMu.X();
   vPhoton_Y = diMu.Y();
   vPhoton_Z = diMu.Z();
   vPhoton_E = diMu.E();
-  vPhoton_M = diMu.M();
+  Mmumu = diMu.M();
   vOpenAngle = muP.Vect().Angle(muM.Vect() );
   //Beam pion trajectory parameters at vertex
   phi_pIn = pIn.Phi();
