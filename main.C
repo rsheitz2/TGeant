@@ -569,7 +569,7 @@ int main(int argc, char **argv){
   const Int_t nCutHist = 13;//Number of impact cut hist
   const Int_t nCutHist_inNH3 = 2;//Spin dependent cuts
   //const Int_t nMCCuts = 6//src/setup.h
-  const Int_t n2D_cutHist = 3;
+  const Int_t n2D_cutHist = 6;
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
 
@@ -580,9 +580,11 @@ int main(int argc, char **argv){
   TH1D *hCut_qT[nMCCuts];
   TH1D *hCut_PhiPhoton[nMCCuts], *hCut_PhiPhoton_gen[nMCCuts];
   TH1D *hCut_PhiS_simple[nMCCuts], *hCut_PhiS_simple_gen[nMCCuts];
-
+  
   TH2D *hCut_MuP_PxPy[nMCCuts], *hCut_MuM_PxPy[nMCCuts];
   TH2D *hCut_Beam_PxPy[nMCCuts];
+  TH2D *hCut_MuP_PxPy_gen[nMCCuts], *hCut_MuM_PxPy_gen[nMCCuts];
+  TH2D *hCut_Beam_PxPy_gen[nMCCuts];
 
   TH1D *hImpactCuts[nCutHist+nCutHist_inNH3][nMCCuts];
   TH2D *h2D_ImpactCuts[n2D_cutHist][nMCCuts];
@@ -621,6 +623,12 @@ int main(int argc, char **argv){
 		    "MuM_PxPy"); ih++;
   Hist2D_ArraySetupMC(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -1, 1, 100,-1,1,ih,
 		    "Beam_PxPy"); ih++;
+  Hist2D_ArraySetupMC(hCut_MuP_PxPy_gen, h2D_ImpactCuts, 100, -5, 5,100,-5,5,ih,
+		    "MuP_PxPy_gen"); ih++;
+  Hist2D_ArraySetupMC(hCut_MuM_PxPy_gen, h2D_ImpactCuts, 100, -5, 5,100,-5,5,ih,
+		    "MuM_PxPy_gen"); ih++;
+  Hist2D_ArraySetupMC(hCut_Beam_PxPy_gen, h2D_ImpactCuts, 100, -1,1,100,-1,1,ih,
+		    "Beam_PxPy_gen"); ih++;
   // }}}
 
   //pT_Weighted tree
@@ -785,7 +793,13 @@ int main(int argc, char **argv){
 
     Double_t cut2D_variables[2*n2D_cutHist] = {lv_p1_Mu.X(), lv_p1_Mu.Y(),
 					       lv_p2_Mu.X(), lv_p2_Mu.Y(),
-					       lv_beam.X(), lv_beam.Y()};
+					       lv_beam.X(), lv_beam.Y(),
+					       lv_Gen_muPlus.X(),
+					       lv_Gen_muPlus.Y(),
+					       lv_Gen_muMinus.X(),
+					       lv_Gen_muMinus.Y(),
+					       lv_Gen_beam.X(),
+					       lv_Gen_beam.Y()};
 
     Bool_t inNH3 = ( (vx_z>-294.5 && vx_z<-239.3) ||
 		     (vx_z>-219.5 && vx_z<-164.3) ) ? true : false;
@@ -990,6 +1004,9 @@ int main(int argc, char **argv){
     TDirectory *MuP_PxPy_CutImpact = myFile->mkdir("MuP_PxPy_CutImpact");
     TDirectory *MuM_PxPy_CutImpact = myFile->mkdir("MuM_PxPy_CutImpact");
     TDirectory *Beam_PxPy_CutImpact = myFile->mkdir("Beam_PxPy_CutImpact");
+    TDirectory *MuP_PxPy_gen_CutImpact =myFile->mkdir("MuP_PxPy_gen_CutImpact");
+    TDirectory *MuM_PxPy_gen_CutImpact =myFile->mkdir("MuM_PxPy_gen_CutImpact");
+    TDirectory *Beam_PxPy_gen_CutImpact=myFile->mkdir("Beam_PxPy_gen_CutImpact");
     for (Int_t i=0; i<nMCCuts; i++) {
       VxZ_CutImpact->cd();
       hCut_VxZ[i]->Write(cutNames[i]);
@@ -1032,6 +1049,12 @@ int main(int argc, char **argv){
       hCut_MuM_PxPy[i]->Write(cutNames[i]);
       Beam_PxPy_CutImpact->cd();
       hCut_Beam_PxPy[i]->Write(cutNames[i]);
+      MuP_PxPy_gen_CutImpact->cd();
+      hCut_MuP_PxPy_gen[i]->Write(cutNames[i]);
+      MuM_PxPy_gen_CutImpact->cd();
+      hCut_MuM_PxPy_gen[i]->Write(cutNames[i]);
+      Beam_PxPy_gen_CutImpact->cd();
+      hCut_Beam_PxPy_gen[i]->Write(cutNames[i]);
     }
 
     myFile->cd();
