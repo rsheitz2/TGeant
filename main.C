@@ -242,6 +242,14 @@ int main(int argc, char **argv){
   rad_bounds.push_back(1.9);
   vxZ_upstream_bounds.push_back(-239.3);
   vxZ_downstream_bounds.push_back(-164.3);
+  if(xN_xval.size()==0 || xPi_xval.size()==0 || xF_xval.size()==0 ||
+     pT_xval.size()==0 || M_xval.size()==0 || rad_xval.size()==0 ||
+     vxZ_upstream_xval.size()==0 || vxZ_downstream_xval.size()==0){
+    cout << "Error:" << endl;
+    cout << "Modern xval values not specifed in " << binFile << endl;
+    cout << " " << endl;
+    exit(EXIT_FAILURE);
+  }
   
   M_bounds.push_back(8.5);
   cout << " " << endl;
