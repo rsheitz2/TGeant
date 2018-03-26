@@ -153,6 +153,10 @@ int main(int argc, char **argv){
     TString dy_type = "";
     Int_t xval = 1;
     ifstream f_bins(binFile);
+    if(!f_bins.is_open() ) {
+      cout << " " << endl;
+      cout << "binFile: " << binFile << " did not open" << endl;
+      exit(EXIT_FAILURE); }
     while (!f_bins.eof()) {
       getline(f_bins,line);
 
@@ -768,6 +772,10 @@ int main(int argc, char **argv){
   tree->Branch("rapidity", &rapidity, "rapidity/D");
   tree->Branch("MasterTrigMask", &MasterTrigMask, "MasterTrigMask/I");
   tree->Branch("trigMask", &trigMask, "trigMask/I");
+  tree->Branch("vPhoton_X", &vPhoton_X, "vPhoton_X/D");
+  tree->Branch("vPhoton_Y", &vPhoton_Y, "vPhoton_Y/D");
+  tree->Branch("vPhoton_Z", &vPhoton_Z, "vPhoton_Z/D");
+  tree->Branch("vPhoton_E", &vPhoton_E, "vPhoton_E/D");
   tree->Branch("x_beam", &x_beam, "x_beam/D");
   tree->Branch("x_target", &x_target, "x_target/D");
   tree->Branch("x_feynman", &x_feynman, "x_feynman/D");
