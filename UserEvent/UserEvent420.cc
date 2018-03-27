@@ -25,7 +25,7 @@ void UserEvent420(PaEvent& e){
   //////////////////////////////////////
   //Setup globally in dy_variables.h
   static Bool_t isMonteCarlo;
-  static Bool_t isHighMass=false, isJPsiMass=false;
+  static Bool_t isHighMass=false, isJPsiMass=false, isnoMassCut=false;
   static Double_t SM1_p1x, SM1_p1y, SM1_p2x, SM1_p2y;
   static Double_t SM2_p1x, SM2_p1y, SM2_p2x, SM2_p2y;
   static Double_t HG01_p1x, HG01_p1y, HG02_y1_p1x, HG02_y1_p1y;
@@ -76,12 +76,13 @@ void UserEvent420(PaEvent& e){
       cout << " " << endl;
       cout << " " << endl;
       cout << "No -T option given" << endl;
-      cout << "Please specify -TmassRange (\"HM\", \"JPsi\")" << endl;
+      cout << "Please specify -TmassRange (\"HM\", \"JPsi\", \"noCut\")"<< endl;
       cout << " " << endl;
       exit(EXIT_FAILURE);
     }
     else if (Phast::Ref().TextUserFlag(0) == "HM") isHighMass = true;
     else if (Phast::Ref().TextUserFlag(0) == "JPsi") isJPsiMass = true;
+    else if (Phast::Ref().TextUserFlag(0) == "noCut") isnoMassCut = true;
     else {
       cout << " " << endl;
       cout << " " << endl;
@@ -321,6 +322,7 @@ void UserEvent420(PaEvent& e){
 
       if (isHighMass && i_mHist != 33) continue;//Mass [4.3, 8.5]
       else if (isJPsiMass && i_mHist != 32) continue;//Mass [4.3, 8.5]
+      else if (isnoMassCut){}
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
