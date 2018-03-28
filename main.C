@@ -23,6 +23,8 @@ int main(int argc, char **argv){
     cout << "Option:  -b textfile with binning information	";
     cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"
 	 << endl;
+    cout << "Option:  -M (\"HM\", \"JPsi\") to specify which mass range to use";
+    cout << "\n   (default mass range is high mass)" << endl;
     cout << "" << endl;
 	
     exit(EXIT_FAILURE);
@@ -32,11 +34,12 @@ int main(int argc, char **argv){
   //Read input arguments
   ///////////////
   // {{{
-  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, binFlag=0;
+  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, binFlag=0, Mflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", binFile="";
+  TString massRange="";
   
-  while ((c = getopt (argc, argv, "wb:u:f:Q:")) != -1) {
+  while ((c = getopt (argc, argv, "wb:u:f:Q:M:")) != -1) {
     switch (c) {
     case 'u':
       uflag = 1;
@@ -58,6 +61,10 @@ int main(int argc, char **argv){
       fname += optarg;
       cout << fname << endl;
       break;
+    case 'M':
+      Mflag = 1;
+      massRange += optarg;
+      break;
     case '?':
       if (optopt == 'u')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -66,6 +73,8 @@ int main(int argc, char **argv){
       else if (optopt == 'Q')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (optopt == 'b')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'M')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (isprint (optopt))
 	fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -101,15 +110,22 @@ int main(int argc, char **argv){
   vector<Double_t> rad_bounds, rad_xval;
   vector<Double_t> vxZ_upstream_bounds, vxZ_upstream_xval;
   vector<Double_t> vxZ_downstream_bounds, vxZ_downstream_xval;
-  xN_bounds.push_back(0.0);
-  xPi_bounds.push_back(0.0);
-  xF_bounds.push_back(-1.0);
-  pT_bounds.push_back(0.4);
-  M_bounds.push_back(4.3);
-  rad_bounds.push_back(0.0);
-  vxZ_upstream_bounds.push_back(-294.5);
-  vxZ_downstream_bounds.push_back(-219.5);
   if (binFlag) {
+    xN_bounds.push_back(0.0);
+    xPi_bounds.push_back(0.0);
+    xF_bounds.push_back(-1.0);
+    pT_bounds.push_back(0.4);
+
+    if (!Mflag || massRange=="HM") M_bounds.push_back(4.3);//High mass
+    else if (massRange=="JPsi")M_bounds.push_back(2.5);//JPsi mass
+    else {
+      cout << "Invalid mass range specified" << endl;
+      exit(EXIT_FAILURE);
+    }
+
+    rad_bounds.push_back(0.0);
+    vxZ_upstream_bounds.push_back(-294.5);
+    vxZ_downstream_bounds.push_back(-219.5);
     string line;
     TString dy_type = "";
     Int_t xval = 1;
@@ -215,48 +231,30 @@ int main(int argc, char **argv){
 	else vxZ_downstream_xval.push_back(atof(line.c_str() ) );
       }
     }//end file loop
-  }//end binFlag
-  else {//HM DY binning
-    xN_bounds.push_back(0.13);
-    xN_bounds.push_back(0.19);
-    xPi_bounds.push_back(0.40);
-    xPi_bounds.push_back(0.56);
-    xF_bounds.push_back(0.21);
-    xF_bounds.push_back(0.41);
-    pT_bounds.push_back(0.9);
-    pT_bounds.push_back(1.4);
-    rad_bounds.push_back(0.719511);
-    rad_bounds.push_back(1.14036);
-    vxZ_upstream_bounds.push_back(-275.021);
-    vxZ_upstream_bounds.push_back(-258.531);
-    vxZ_downstream_bounds.push_back(-199.956);
-    vxZ_downstream_bounds.push_back(-183.598);
-
-    M_bounds.push_back(4.75);
-    M_bounds.push_back(5.50);
-  }
-  xN_bounds.push_back(1.0);
-  xPi_bounds.push_back(1.0);
-  xF_bounds.push_back(1.0);
-  pT_bounds.push_back(5.0);
-  rad_bounds.push_back(1.9);
-  vxZ_upstream_bounds.push_back(-239.3);
-  vxZ_downstream_bounds.push_back(-164.3);
-  if(xN_xval.size()==0 || xPi_xval.size()==0 || xF_xval.size()==0 ||
-     pT_xval.size()==0 || M_xval.size()==0 || rad_xval.size()==0 ||
-     vxZ_upstream_xval.size()==0 || vxZ_downstream_xval.size()==0){
-    cout << "Error:" << endl;
-    cout << "Modern xval values not specifed in " << binFile << endl;
-    cout << " " << endl;
-    exit(EXIT_FAILURE);
-  }
+    xN_bounds.push_back(1.0);
+    xPi_bounds.push_back(1.0);
+    xF_bounds.push_back(1.0);
+    pT_bounds.push_back(5.0);
+    rad_bounds.push_back(1.9);
+    vxZ_upstream_bounds.push_back(-239.3);
+    vxZ_downstream_bounds.push_back(-164.3);
   
-  M_bounds.push_back(8.5);
-  cout << " " << endl;
-  cout << "Warning!!!!!!!" << endl;
-  cout << "High Mass" << endl;
-  cout << "!!!!!!!!!!!!!!!" << endl;
-  cout << " " << endl;
+    if (!Mflag || massRange=="HM") M_bounds.push_back(8.5);//High mass
+    else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
+    cout << " " << endl;
+    cout << "Mass range set to:" << endl;
+    (!Mflag) ? cout << "HM" << endl : cout << massRange << endl;
+    cout << " " << endl;
+
+    if(xN_xval.size()==0 || xPi_xval.size()==0 || xF_xval.size()==0 ||
+       pT_xval.size()==0 || M_xval.size()==0 || rad_xval.size()==0 ||
+       vxZ_upstream_xval.size()==0 || vxZ_downstream_xval.size()==0){
+      cout << "Error:" << endl;
+      cout << "Modern xval values not specifed in " << binFile << endl;
+      cout << " " << endl;
+      exit(EXIT_FAILURE);
+    }
+  }//end binFlag
 
   if (!fflag) {
     cout << "Please enter an input file" << endl;
@@ -298,7 +296,7 @@ int main(int argc, char **argv){
     tv_vxZ_downstream_bounds[i] = vxZ_downstream_bounds.at(i);
   }
   Int_t nBins = xN_xval.size();
-  if (nBins == 0){
+  if (binFlag && nBins==0){
     cout << " " << endl;
     cout << "Error: nBins = 0" << endl;
     cout << " " << endl;
@@ -626,17 +624,17 @@ int main(int argc, char **argv){
 
   ih=0;
   Hist2D_ArraySetupMC(hCut_MuP_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
-		    "MuP_PxPy"); ih++;
+		      "MuP_PxPy"); ih++;
   Hist2D_ArraySetupMC(hCut_MuM_PxPy, h2D_ImpactCuts, 100, -5, 5, 100, -5,5,ih,
-		    "MuM_PxPy"); ih++;
+		      "MuM_PxPy"); ih++;
   Hist2D_ArraySetupMC(hCut_Beam_PxPy, h2D_ImpactCuts, 100, -1, 1, 100,-1,1,ih,
-		    "Beam_PxPy"); ih++;
+		      "Beam_PxPy"); ih++;
   Hist2D_ArraySetupMC(hCut_MuP_PxPy_gen, h2D_ImpactCuts, 100, -5, 5,100,-5,5,ih,
-		    "MuP_PxPy_gen"); ih++;
+		      "MuP_PxPy_gen"); ih++;
   Hist2D_ArraySetupMC(hCut_MuM_PxPy_gen, h2D_ImpactCuts, 100, -5, 5,100,-5,5,ih,
-		    "MuM_PxPy_gen"); ih++;
+		      "MuM_PxPy_gen"); ih++;
   Hist2D_ArraySetupMC(hCut_Beam_PxPy_gen, h2D_ImpactCuts, 100, -1,1,100,-1,1,ih,
-		    "Beam_PxPy_gen"); ih++;
+		      "Beam_PxPy_gen"); ih++;
   // }}}
 
   //pT_Weighted tree
@@ -826,13 +824,13 @@ int main(int argc, char **argv){
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
     if (inNH3){
       align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
-			  lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
-			  lv_muMinus_TF);
+			    lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
+			    lv_muMinus_TF);
       hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
 
       align_wrt_beam_photon(lv_Gen_beam_TF, lv_Gen_target_TF, lv_Gen_Spin_TF,
-			  lv_Gen_Spin_simple_TF, lv_Gen_virtualPhoton_TF,
-			  lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);
+			    lv_Gen_Spin_simple_TF, lv_Gen_virtualPhoton_TF,
+			    lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);
       hCut_PhiS_simple_gen[icut]->Fill(lv_Gen_Spin_simple_TF.Phi() );
     }
     Fill2D_CutsMC(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist);
@@ -921,11 +919,11 @@ int main(int argc, char **argv){
     //Target frame:
     //Performed after Physical Kinematics cut
     /*align_wrt_beam_photon(lv_beam_TF, lv_target_TF, lv_Spin_TF,
-			  lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
-			  lv_muMinus_TF);
-    align_wrt_beam_photon(lv_Gen_beam_TF, lv_Gen_target_TF, lv_Gen_Spin_TF,
-			  lv_Gen_Spin_simple_TF, lv_Gen_virtualPhoton_TF,
-			  lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);*/
+      lv_Spin_simple_TF, lv_virtualPhoton_TF, lv_muPlus_TF,
+      lv_muMinus_TF);
+      align_wrt_beam_photon(lv_Gen_beam_TF, lv_Gen_target_TF, lv_Gen_Spin_TF,
+      lv_Gen_Spin_simple_TF, lv_Gen_virtualPhoton_TF,
+      lv_Gen_muPlus_TF, lv_Gen_muMinus_TF);*/
     
     
     //Boost from TF to CS
@@ -1067,17 +1065,19 @@ int main(int argc, char **argv){
 
     myFile->cd();
     
-    tv_xN_bounds.Write("tv_xN_bounds");
-    tv_xPi_bounds.Write("tv_xPi_bounds");
-    tv_xF_bounds.Write("tv_xF_bounds");
-    tv_pT_bounds.Write("tv_pT_bounds");
-    tv_M_bounds.Write("tv_M_bounds");
+    if (binFlag){
+      tv_xN_bounds.Write("tv_xN_bounds");
+      tv_xPi_bounds.Write("tv_xPi_bounds");
+      tv_xF_bounds.Write("tv_xF_bounds");
+      tv_pT_bounds.Write("tv_pT_bounds");
+      tv_M_bounds.Write("tv_M_bounds");
 
-    tv_xN_xval.Write("tv_xN_xval");
-    tv_xPi_xval.Write("tv_xPi_xval");
-    tv_xF_xval.Write("tv_xF_xval");
-    tv_pT_xval.Write("tv_pT_xval");
-    tv_M_xval.Write("tv_M_xval");
+      tv_xN_xval.Write("tv_xN_xval");
+      tv_xPi_xval.Write("tv_xPi_xval");
+      tv_xF_xval.Write("tv_xF_xval");
+      tv_pT_xval.Write("tv_pT_xval");
+      tv_M_xval.Write("tv_M_xval");
+    }
 
     
     cout << myFile->GetName() << " was written" << endl;
