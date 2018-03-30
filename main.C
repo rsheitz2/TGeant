@@ -24,6 +24,7 @@ int main(int argc, char **argv){
     cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"
 	 << endl;
     cout << "Option:  -M (\"HM\", \"JPsi\") to specify which mass range to use";
+	cout << "     (Option to be used with -b for specifying mass bins)"
     cout << "\n   (default mass range is high mass)" << endl;
     cout << "" << endl;
 	
