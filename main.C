@@ -23,8 +23,8 @@ int main(int argc, char **argv){
     cout << "Option:  -b textfile with binning information	";
     cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"
 	 << endl;
-    cout << "Option:  -M (\"HM\", \"JPsi\") to specify which mass range to use";
-	cout << "     (Option to be used with -b for specifying mass bins)"
+    cout << "Option:  -M (\"HM\", \"JPsi\", \"AMDY\") to specify which mass range to use";
+	cout << "     (Option to be used with -b for specifying mass bins)";
     cout << "\n   (default mass range is high mass)" << endl;
     cout << "" << endl;
 	
@@ -119,6 +119,7 @@ int main(int argc, char **argv){
 
     if (!Mflag || massRange=="HM") M_bounds.push_back(4.3);//High mass
     else if (massRange=="JPsi")M_bounds.push_back(2.5);//JPsi mass
+	else if (massRange=="AMDY")M_bounds.push_back(0.0);//All Mass DY
     else {
       cout << "Invalid mass range specified" << endl;
       exit(EXIT_FAILURE);
@@ -242,6 +243,7 @@ int main(int argc, char **argv){
   
     if (!Mflag || massRange=="HM") M_bounds.push_back(8.5);//High mass
     else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
+    else if (massRange=="AMDY")M_bounds.push_back(16.0);//All Mass DY
     cout << " " << endl;
     cout << "Mass range set to:" << endl;
     (!Mflag) ? cout << "HM" << endl : cout << massRange << endl;
