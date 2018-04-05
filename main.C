@@ -751,9 +751,13 @@ int main(int argc, char **argv){
       cout << "Positive vMCtrIn_Z	=    " << gen_trIn_Z << endl;
       cout << "Physical gen_tr1_tr2	=    " << gen_tr1_tr2 << endl;
       cout << " " << endl;
+	  cout << "Addtional mass cut > 4geV" << endl;
 
       first = false;
     }
+	
+	//Additional cuts
+	if (Mflag && vDiMuon_invM < 4.0) continue;
     
     //Cuts
     cut_bin = 1;

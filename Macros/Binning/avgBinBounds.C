@@ -26,6 +26,7 @@ int main(int argc, char **argv){
 	 << endl;
     cout << "    Otherwise bin values are output and over written to ";
     cout << "\"binValues.txt\"" << endl;
+    cout << "Option:  -M (o specify which mass range to use";
     cout << "" << endl;
 	
     exit(EXIT_FAILURE);
@@ -34,12 +35,12 @@ int main(int argc, char **argv){
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
-  Int_t uflag=0, Qflag=0, fflag=0, Pflag=0, binflag=0;
+  Int_t uflag=0, Qflag=0, fflag=0, Pflag=0, binflag=0, Mflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", period = "";
   Int_t nBins;
   
-  while ((c = getopt (argc, argv, "n:u:f:Q:P:")) != -1) {
+  while ((c = getopt (argc, argv, "n:u:f:Q:P:M")) != -1) {
     switch (c) {
     case 'n':
       binflag = 1;
@@ -60,6 +61,9 @@ int main(int argc, char **argv){
     case 'P':
       Pflag = 1;
       period += optarg;
+      break;
+    case 'M':
+      Mflag = 1;
       break;
     case '?':
       if (optopt == 'u')
@@ -382,9 +386,28 @@ int main(int argc, char **argv){
   //Int_t tree_entries = 1000;//Debug
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
+  Bool_t first = true;
   for (Int_t i=0; i<tree_entries; i++){
     T1->GetEntry(i, 0);
     
+    //Settings
+    if (first || i==tree_entries-1){
+      cout << " " << endl;
+      cout << "Setup!!!!!!!!!" << endl;
+	  cout << "Normal DY cuts" << endl;
+
+	  if (Mflag) {
+		  cout << "Additional Mass cut" << endl;
+		  cout << "Mass > 3.08 && < 3.12 GeV" << endl;
+	  }
+
+      first = false;
+    }
+
+	//Additional cuts
+	//if (Mflag && vDiMuon_invM < 4.0) continue;
+	if (Mflag && ( (vDiMuon_invM > 3.12) || (vDiMuon_invM < 3.08) ) ) continue;
+
     //Cuts
     cut_bin = 1;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//All Data
