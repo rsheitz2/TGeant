@@ -5,28 +5,35 @@ using namespace std;
 
 int main(int argc, char **argv){
   if(argc < 2){
-    cout << "" << endl;
-    cout << "To be used with Real Data" << endl;
+    cout << "To be used with Real Data or MC Data" << endl;
     cout << "To determine the bin bounds and average bin values";
     cout << " for the given number of Bins" << endl;
     cout << "" << endl;
     cout << "Usage:" << endl;
-    cout << "./main [options] [-Pperiod] -nBins [-ffilename]" << endl;
+    cout << "./main [options] [-Pperiod] [-nBins] [-ffilename]" << endl;
     cout << "filename should be the full path name" << endl;
     cout << "" << endl;
+	cout << "---Needed Options---" << endl;
     cout << "Option:  -P period         (which period to take bad spills from)"
 	 << endl;
-    cout << "(i.e W07, W08...  Can also enter \"WAll\" for ALL periods or" << 
-      " \"MC\" for NO periods)";
+    cout << "         (i.e W07, W08...  Can also enter \"WAll\" for ALL periods or" << 
+      " \"MC\" for NO periods)" << endl;
+	cout << "Option:  -n bins           (How many bins to make)" << endl;
     cout << "" << endl;
-    cout << "Option:  -u ##		(new UserEvent number, default==420)"
-	 << endl;
-    cout << "        default output file is named \"Output.root\"" << endl;
+	cout << "---Write Option---" << endl;
     cout << "Option:  -Q outName	(write output to file to outName)"
 	 << endl;
     cout << "    Otherwise bin values are output and over written to ";
     cout << "\"binValues.txt\"" << endl;
-    cout << "Option:  -M (o specify which mass range to use";
+    cout << "" << endl;
+	cout << "---Additional Cut Options---" << endl;
+    cout << "Option:  -i minMass (to specify a minimum mass cut)";
+	cout << "          (default value is 0.0)" << endl;
+    cout << "Option:  -a maxMass (to specify a maximum mass cut)";
+	cout << "          (default value is 16.0)" << endl;
+	cout << "" << endl;
+	cout << "---Additional Options---" << endl;
+    cout << "Option:  -u ##		(new UserEvent number, default==420)" << endl;
     cout << "" << endl;
 	
     exit(EXIT_FAILURE);
@@ -35,12 +42,13 @@ int main(int argc, char **argv){
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
-  Int_t uflag=0, Qflag=0, fflag=0, Pflag=0, binflag=0, Mflag=0;
+  Int_t uflag=0, Qflag=0, fflag=0, Pflag=0, binflag=0, iflag=0, aflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", period = "";
+  Double_t M_min = 0.0, M_max=16.0;
   Int_t nBins;
   
-  while ((c = getopt (argc, argv, "n:u:f:Q:P:M")) != -1) {
+  while ((c = getopt (argc, argv, "n:u:f:Q:P:i:a:")) != -1) {
     switch (c) {
     case 'n':
       binflag = 1;
@@ -62,8 +70,13 @@ int main(int argc, char **argv){
       Pflag = 1;
       period += optarg;
       break;
-    case 'M':
-      Mflag = 1;
+    case 'i':
+      iflag = 1;
+	  M_min = stof(optarg);
+      break;
+    case 'a':
+      aflag = 1;
+	  M_max = stof(optarg);
       break;
     case '?':
       if (optopt == 'u')
@@ -73,6 +86,10 @@ int main(int argc, char **argv){
       else if (optopt == 'P')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (optopt == 'Q')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'i')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'a')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (isprint (optopt))
 	fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -396,17 +413,16 @@ int main(int argc, char **argv){
       cout << "Setup!!!!!!!!!" << endl;
 	  cout << "Normal DY cuts" << endl;
 
-	  if (Mflag) {
+	  if (iflag || aflag) {
 		  cout << "Additional Mass cut" << endl;
-		  cout << "Mass > 3.08 && < 3.12 GeV" << endl;
+		  cout << "    Mass range " << M_min << " - " << M_max << endl;
 	  }
 
       first = false;
     }
 
 	//Additional cuts
-	//if (Mflag && vDiMuon_invM < 4.0) continue;
-	if (Mflag && ( (vDiMuon_invM > 3.12) || (vDiMuon_invM < 3.08) ) ) continue;
+	if ( (vDiMuon_invM < M_min) || (vDiMuon_invM > M_max) ) continue;
 
     //Cuts
     cut_bin = 1;

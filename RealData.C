@@ -7,30 +7,39 @@ using namespace std;
 
 int main(int argc, char **argv){
   if(argc < 2){
-    cout << "" << endl;
     cout << "To be used with Real Data" << endl;
     cout << "" << endl;
     cout << "Usage:" << endl;
     cout << "./main [options] [-Pperiod] [-ffilename]" << endl;
     cout << "filename should be the full path name" << endl;
     cout << "" << endl;
+	cout << "---Needed Options---" << endl;
     cout << "Option:  -P period         (which period to take bad spills from)"
 	 << endl;
-    cout << "(i.e W07, W08...  Can also enter \"WAll\" for all periods)";
+    cout << "(i.e W07, W08...  Can also enter \"WAll\" for all periods)" <<endl;
     cout << "" << endl;
-    cout << "Option:  -u ##		(new UserEvent number, default==420)"
-	 << endl;
+	cout << "---Write Options---" << endl;
     cout << "Option:  -w		(write output to file)" << endl;
     cout << "        default output file is named \"Output.root\"" << endl;
     cout << "Option:  -Q outName	(write output to file to outName)"
 	 << endl;
-    cout << "Option:  -b textfile with binning information	";
-    cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)";
-    cout << endl;
     cout << "" << endl;
+	cout << "---Binning Options---" << endl;
+    cout << "Option:  -b textfile with binning information	";
+    cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"<<endl;
     cout << "Option:  -M (\"HM\", \"JPsi\", \"AMDY\") to specify which mass ";
     cout << "range to use for \"binning information\" " << endl;
     cout << "   (default mass range is high mass)" << endl;
+    cout << "" << endl;
+	cout << "---Additional Cut Options---" << endl;
+    cout << "Option:  -i minMass (to specify a minimum mass cut)";
+	cout << "          (default value is 0.0)" << endl;
+    cout << "Option:  -a maxMass (to specify a maximum mass cut)";
+	cout << "          (default value is 16.0)" << endl;
+	cout << "" << endl;
+	cout << "---Additional Options---" << endl;
+    cout << "Option:  -u ##		(new UserEvent number, default==420)"
+	 << endl;
     exit(EXIT_FAILURE);
   }
   cout << "" << endl;
@@ -39,10 +48,12 @@ int main(int argc, char **argv){
   //Read input arguments
   ///////////////
   // {{{
-  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, Pflag=0, binFlag=0, Mflag=0;
+  Int_t uflag=0, wflag=0, Qflag=0, fflag=0, Pflag=0, binFlag=0, iflag=0, aflag=0;
+  Int_t Mflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", period = "", binFile = "";
   TString massRange="";
+  Double_t M_min=0.0, M_max=16.0;
 
   while ((c = getopt (argc, argv, "wM:b:u:f:Q:P:")) != -1) {
     switch (c) {
@@ -69,9 +80,17 @@ int main(int argc, char **argv){
       Pflag = 1;
       period += optarg;
       break;
+    case 'i':
+      iflag = 1;
+	  M_min = stof(optarg);
+      break;
+    case 'a':
+      aflag = 1;
+	  M_max = stof(optarg);
+      break;
     case 'M':
       Mflag = 1;
-      massRange += optarg;
+	  massRange += optarg;
       break;
     case '?':
       if (optopt == 'u')
@@ -83,6 +102,10 @@ int main(int argc, char **argv){
       else if (optopt == 'Q')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (optopt == 'b')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'i')
+	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
+      else if (optopt == 'a')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
       else if (optopt == 'M')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -852,18 +875,20 @@ int main(int argc, char **argv){
       cout << "vxZ_NH3			=    " << vxZ_NH3 << endl;
       cout << "rad_NH3			=    " << rad_NH3 << endl;
       cout << " " << endl;
-      cout << "Additional mass cut" << endl;
+	  if (iflag || aflag) {
+		  cout << "Additional Mass cut" << endl;
+		  cout << "    Mass range " << M_min << " - " << M_max << endl;
+	  }
       cout << " " << endl;
 
       first = false;
     }
 
+	//Additional cuts
+	if ( (vDiMuon_invM < M_min) || (vDiMuon_invM > M_max) ) continue;
+
     //Perform Cuts
     // {{{
-
-	//Additional cuts
-	if ( (vDiMuon_invM > 3.12) || (vDiMuon_invM < 3.08) ) continue;
-
     //Setup Vectors in different coordinate systems
     //Compass frame:
     TLorentzVector lv_beam(beam_X, beam_Y, beam_Z, beam_E);
