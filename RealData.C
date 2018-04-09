@@ -810,6 +810,8 @@ int main(int argc, char **argv){
   for (Int_t i=0; i<7; i++) {
     tree->Branch(Form("Spin_%i", i), &Spin[i], Form("Spin_%i/D", i));
   }
+  tree->Branch("dilutionFactor", &dilutionFactor, "dilutionFactor/D");
+  tree->Branch("Polarization", &Polarization, "Polarization/D");
   tree->Branch("targetPosition", &targetPosition, "targetPosition/I");
   tree->Branch("theta_traj1", &theta_traj1, "theta_traj1/D");
   tree->Branch("phi_traj1", &phi_traj1, "phi_traj1/D");
