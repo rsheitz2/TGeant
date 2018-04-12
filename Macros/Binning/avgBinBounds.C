@@ -16,8 +16,8 @@ int main(int argc, char **argv){
     cout << "---Needed Options---" << endl;
     cout << "Option:  -P period         (which period to take bad spills from)"
 	 << endl;
-    cout << "         (i.e W07, W08...  Can also enter \"WAll\" for ALL periods or" << 
-      " \"MC\" for NO periods)" << endl;
+    cout << "         (i.e W07, W08...  Can also enter \"WAll\" for ALL periods"
+	 << " or \"MC\" for NO periods)" << endl;
     cout << "Option:  -n bins           (How many bins to make)" << endl;
     cout << "" << endl;
     cout << "---Write Option---" << endl;
@@ -34,22 +34,23 @@ int main(int argc, char **argv){
     cout << "" << endl;
     cout << "---Additional Options---" << endl;
     cout << "Option:  -u ##		(new UserEvent number, default==420)" << endl;
-    cout << "Option:  -C 		(For adding dilution/polarization corrections to output file)" << endl;
+    cout << "Option:  -D        (debug mode, only loop over 10000 events)"<<endl;
     cout << "" << endl;
-	
+
     exit(EXIT_FAILURE);
   }
   cout << "" << endl;
   TApplication theApp("tapp", &argc, argv);
 
   //Read input arguments
-  Int_t uflag=0, Qflag=0, fflag=0, Pflag=0, binflag=0, iflag=0, aflag=0, Cflag=0;
+  Int_t uflag=0, Qflag=0,fflag=0, Pflag=0, binflag=0, iflag=0, aflag=0;
+  Int_t Dflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", period = "";
   Double_t M_min = 0.0, M_max=16.0;
   Int_t nBins;
-  
-  while ((c = getopt (argc, argv, "n:u:f:Q:P:i:a:C")) != -1) {
+
+  while ((c = getopt (argc, argv, "n:u:f:Q:P:i:a:D")) != -1) {
     switch (c) {
     case 'n':
       binflag = 1;
@@ -79,8 +80,8 @@ int main(int argc, char **argv){
       aflag = 1;
       M_max = stof(optarg);
       break;
-    case 'C':
-      Cflag = 1;
+    case 'D':
+      Dflag = 1;
       break;
     case '?':
       if (optopt == 'u')
@@ -120,7 +121,7 @@ int main(int argc, char **argv){
   }
   else userEvent += userNum + "/Particles";
   TChain* T1 = new TChain(userEvent);
-  
+
   TString BadSpillPath = "Src/BadSpills/t3/";//Get badspill information
   map <Long64_t, vector<Long64_t> > BadMap;
   Long64_t BadRun, BadSpill;
@@ -128,7 +129,9 @@ int main(int argc, char **argv){
     cout << "Please enter a period for bad spills list" << endl;
     exit(EXIT_FAILURE);
   }
-  else if (period == "MC"){}
+  else if (period == "MC"){
+    cout << "Monte-Carlo data specified ==> no badspill cuts" << endl;
+  }
   else{
     BadSpillPath += period;
     ifstream fBadSpills(BadSpillPath+"_BadSpills.txt");
@@ -158,6 +161,10 @@ int main(int argc, char **argv){
     exit(EXIT_FAILURE);    
   }
 
+  if(Dflag){
+    cout << "Debug mode ====> Only 10000 events considered in tree" << endl;
+  }
+
   //Internal variables and binning
   Double_t M_proton = 0.938272;
 
@@ -170,124 +177,6 @@ int main(int argc, char **argv){
   vector<Double_t> sort_rad;
   vector<Double_t> sort_vxZ_upstream;
   vector<Double_t> sort_vxZ_downstream;
-
-  //Averages
-  Double_t AvgPolarization=0.0, AvgDilution=0.0, AvgDilution_corrected=0.0;
-  Int_t AvgPolarization_count=0, AvgDilution_count=0;
-  
-  vector<Double_t> AvgPol_xN(nBins, 0.0), AvgDil_xN(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count(nBins, 0), AvgDil_xN_count(nBins, 0);
-  vector<Double_t> AvgPol_xN_UpStream(nBins, 0.0), AvgDil_xN_UpStream(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count_UpStream(nBins, 0), AvgDil_xN_count_UpStream(nBins, 0);
-  vector<Double_t> AvgPol_xN_DownStream(nBins, 0.0), AvgDil_xN_DownStream(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count_DownStream(nBins, 0), AvgDil_xN_count_DownStream(nBins, 0);
-  //Polarization by target
-  vector<Double_t> AvgPol_xN_UpStream_Up(nBins, 0.0), AvgDil_xN_UpStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count_UpStream_Up(nBins, 0), AvgDil_xN_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_xN_DownStream_Up(nBins, 0.0), AvgDil_xN_DownStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count_DownStream_Up(nBins, 0), AvgDil_xN_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_xN_UpStream_Down(nBins, 0.0), AvgDil_xN_UpStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count_UpStream_Down(nBins, 0), AvgDil_xN_count_UpStream_Down(nBins, 0);
-  vector<Double_t> AvgPol_xN_DownStream_Down(nBins, 0.0), AvgDil_xN_DownStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_xN_count_DownStream_Down(nBins, 0), AvgDil_xN_count_DownStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_xPi(nBins, 0.0), AvgDil_xPi(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count(nBins, 0), AvgDil_xPi_count(nBins, 0);
-  vector<Double_t> AvgPol_xPi_UpStream(nBins, 0.0), AvgDil_xPi_UpStream(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count_UpStream(nBins, 0), AvgDil_xPi_count_UpStream(nBins, 0);
-  vector<Double_t> AvgPol_xPi_DownStream(nBins, 0.0), AvgDil_xPi_DownStream(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count_DownStream(nBins, 0), AvgDil_xPi_count_DownStream(nBins, 0);
-  //Polarization by target
-  vector<Double_t> AvgPol_xPi_UpStream_Up(nBins, 0.0), AvgDil_xPi_UpStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count_UpStream_Up(nBins, 0), AvgDil_xPi_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_xPi_DownStream_Up(nBins, 0.0), AvgDil_xPi_DownStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count_DownStream_Up(nBins, 0), AvgDil_xPi_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_xPi_UpStream_Down(nBins, 0.0), AvgDil_xPi_UpStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count_UpStream_Down(nBins, 0), AvgDil_xPi_count_UpStream_Down(nBins, 0);
-  vector<Double_t> AvgPol_xPi_DownStream_Down(nBins, 0.0), AvgDil_xPi_DownStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_xPi_count_DownStream_Down(nBins, 0), AvgDil_xPi_count_DownStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_xF(nBins, 0.0), AvgDil_xF(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count(nBins, 0), AvgDil_xF_count(nBins, 0);
-  vector<Double_t> AvgPol_xF_UpStream(nBins, 0.0), AvgDil_xF_UpStream(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count_UpStream(nBins, 0), AvgDil_xF_count_UpStream(nBins, 0);
-  vector<Double_t> AvgPol_xF_DownStream(nBins, 0.0), AvgDil_xF_DownStream(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count_DownStream(nBins, 0), AvgDil_xF_count_DownStream(nBins, 0);
-  //Polarization by target
-  vector<Double_t> AvgPol_xF_UpStream_Up(nBins, 0.0), AvgDil_xF_UpStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count_UpStream_Up(nBins, 0), AvgDil_xF_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_xF_DownStream_Up(nBins, 0.0), AvgDil_xF_DownStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count_DownStream_Up(nBins, 0), AvgDil_xF_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_xF_UpStream_Down(nBins, 0.0), AvgDil_xF_UpStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count_UpStream_Down(nBins, 0), AvgDil_xF_count_UpStream_Down(nBins, 0);
-  vector<Double_t> AvgPol_xF_DownStream_Down(nBins, 0.0), AvgDil_xF_DownStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_xF_count_DownStream_Down(nBins, 0), AvgDil_xF_count_DownStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_pT(nBins, 0.0), AvgDil_pT(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count(nBins, 0), AvgDil_pT_count(nBins, 0);
-  vector<Double_t> AvgPol_pT_UpStream(nBins, 0.0), AvgDil_pT_UpStream(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count_UpStream(nBins, 0), AvgDil_pT_count_UpStream(nBins, 0);
-  vector<Double_t> AvgPol_pT_DownStream(nBins, 0.0), AvgDil_pT_DownStream(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count_DownStream(nBins, 0), AvgDil_pT_count_DownStream(nBins, 0);
-  //Polarization by target
-  vector<Double_t> AvgPol_pT_UpStream_Up(nBins, 0.0), AvgDil_pT_UpStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count_UpStream_Up(nBins, 0), AvgDil_pT_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_pT_DownStream_Up(nBins, 0.0), AvgDil_pT_DownStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count_DownStream_Up(nBins, 0), AvgDil_pT_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_pT_UpStream_Down(nBins, 0.0), AvgDil_pT_UpStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count_UpStream_Down(nBins, 0), AvgDil_pT_count_UpStream_Down(nBins, 0);
-  vector<Double_t> AvgPol_pT_DownStream_Down(nBins, 0.0), AvgDil_pT_DownStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_pT_count_DownStream_Down(nBins, 0), AvgDil_pT_count_DownStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_M(nBins, 0.0), AvgDil_M(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count(nBins, 0), AvgDil_M_count(nBins, 0);
-  vector<Double_t> AvgPol_M_UpStream(nBins, 0.0), AvgDil_M_UpStream(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count_UpStream(nBins, 0), AvgDil_M_count_UpStream(nBins, 0);
-  vector<Double_t> AvgPol_M_DownStream(nBins, 0.0), AvgDil_M_DownStream(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count_DownStream(nBins, 0), AvgDil_M_count_DownStream(nBins, 0);
-  //Polarization by target
-  vector<Double_t> AvgPol_M_UpStream_Up(nBins, 0.0), AvgDil_M_UpStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count_UpStream_Up(nBins, 0), AvgDil_M_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_M_DownStream_Up(nBins, 0.0), AvgDil_M_DownStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count_DownStream_Up(nBins, 0), AvgDil_M_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_M_UpStream_Down(nBins, 0.0), AvgDil_M_UpStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count_UpStream_Down(nBins, 0), AvgDil_M_count_UpStream_Down(nBins, 0);
-  vector<Double_t> AvgPol_M_DownStream_Down(nBins, 0.0), AvgDil_M_DownStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_M_count_DownStream_Down(nBins, 0), AvgDil_M_count_DownStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_rad(nBins, 0.0), AvgDil_rad(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count(nBins, 0), AvgDil_rad_count(nBins, 0);
-  vector<Double_t> AvgPol_rad_UpStream(nBins, 0.0), AvgDil_rad_UpStream(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count_UpStream(nBins, 0), AvgDil_rad_count_UpStream(nBins, 0);
-  vector<Double_t> AvgPol_rad_DownStream(nBins, 0.0), AvgDil_rad_DownStream(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count_DownStream(nBins, 0), AvgDil_rad_count_DownStream(nBins, 0);
-  //Polarization by target
-  vector<Double_t> AvgPol_rad_UpStream_Up(nBins, 0.0), AvgDil_rad_UpStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count_UpStream_Up(nBins, 0), AvgDil_rad_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_rad_DownStream_Up(nBins, 0.0), AvgDil_rad_DownStream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count_DownStream_Up(nBins, 0), AvgDil_rad_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_rad_UpStream_Down(nBins, 0.0), AvgDil_rad_UpStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count_UpStream_Down(nBins, 0), AvgDil_rad_count_UpStream_Down(nBins, 0);
-  vector<Double_t> AvgPol_rad_DownStream_Down(nBins, 0.0), AvgDil_rad_DownStream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_rad_count_DownStream_Down(nBins, 0), AvgDil_rad_count_DownStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_vxZ_upstream(nBins, 0.0), AvgDil_vxZ_upstream(nBins, 0.0);
-  vector<Int_t> AvgPol_vxZ_count_UpStream(nBins, 0), AvgDil_vxZ_count_UpStream(nBins, 0);
-
-  //Polarization by target
-  vector<Double_t> AvgPol_vxZ_upstream_Up(nBins, 0.0), AvgDil_vxZ_upstream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_vxZ_count_UpStream_Up(nBins, 0), AvgDil_vxZ_count_UpStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_vxZ_upstream_Down(nBins, 0.0), AvgDil_vxZ_upstream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_vxZ_count_UpStream_Down(nBins, 0), AvgDil_vxZ_count_UpStream_Down(nBins, 0);
-
-  vector<Double_t> AvgPol_vxZ_downstream(nBins, 0.0), AvgDil_vxZ_downstream(nBins, 0.0);
-  vector<Int_t> AvgPol_vxZ_count_DownStream(nBins, 0), AvgDil_vxZ_count_DownStream(nBins, 0);
-
-  //Polarization by target
-  vector<Double_t> AvgPol_vxZ_downstream_Up(nBins, 0.0), AvgDil_vxZ_downstream_Up(nBins, 0.0);
-  vector<Int_t> AvgPol_vxZ_count_DownStream_Up(nBins, 0), AvgDil_vxZ_count_DownStream_Up(nBins, 0);
-  vector<Double_t> AvgPol_vxZ_downstream_Down(nBins, 0.0), AvgDil_vxZ_downstream_Down(nBins, 0.0);
-  vector<Int_t> AvgPol_vxZ_count_DownStream_Down(nBins, 0), AvgDil_vxZ_count_DownStream_Down(nBins, 0);
 
 
   //////UserEvent Information
@@ -455,7 +344,7 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("meanT_trPIn", &meanT_trPIn);
   T1->SetBranchAddress("sigT_trPIn", &sigT_trPIn);
   T1->SetBranchAddress("XX0_trPIn", &XX0_trPIn);
-  
+
   //Event specific
   T1->SetBranchAddress("NParticle", &NParticle);
   T1->SetBranchAddress("NTrack", &NTrack);
@@ -515,18 +404,17 @@ int main(int argc, char **argv){
   const Int_t nCutHist = 11;//Number of impact cut hist
   TH1D* hCuts = new TH1D("hCuts", "hCuts", 200, 0, 200);
   Int_t cut_bin = 1, cut_space = 10;
-    
 
-  Int_t tree_entries = T1->GetEntries();
-  //Int_t tree_entries = 1000;//Debug
+
+  Int_t tree_entries = (!Dflag) ? T1->GetEntries() : 10000;
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
   Bool_t first = true;
-  for (Int_t i=0; i<tree_entries; i++){
-    T1->GetEntry(i, 0);
-    
+  for (Int_t ev=0; ev<tree_entries; ev++){
+    T1->GetEntry(ev, 0);
+
     //Settings
-    if (first || i==tree_entries-1){
+    if (first || ev==tree_entries-1){
       cout << " " << endl;
       cout << "Setup!!!!!!!!!" << endl;
       cout << "Normal DY cuts" << endl;
@@ -553,7 +441,7 @@ int main(int argc, char **argv){
 			 SpillNum) != BadMap[it->first].end() ) continue;
     }
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Bad spills
-  
+
     TLorentzVector lv_p1_Mu(vP1_X, vP1_Y, vP1_Z, vP1_E);
     TLorentzVector lv_p2_Mu(vP2_X, vP2_Y, vP2_Z, vP2_E);
     TLorentzVector lv_diMu = lv_p1_Mu + lv_p2_Mu;
@@ -563,275 +451,29 @@ int main(int argc, char **argv){
     if (x_target < 0.0 || x_target > 1.0) continue;
     if (x_feynman < -1.0 || x_feynman > 1.0) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Physical Kinematics
-      
+
     if (q_transverse < 0.4 || q_transverse > 5.0) continue;
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//qT cuts
-      
+
     if ( (vx_z < -294.5 || vx_z > -239.3) && (vx_z < -219.5 || vx_z > -164.3)
 	 ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target z-cut
-      
+
     if(TMath::Power(vx_x, 2) + TMath::Power(vx_y, 2) >= TMath::Power(1.9, 2)
        ) continue;//NH3 targets
     hCuts->Fill(cut_bin-1); cut_bin += cut_space;//Target radial cut
 
-    
+
     ////All data after cuts
     //////////////
     Double_t radius = TMath::Sqrt(vx_x*vx_x+ vx_y*vx_y);
 
 
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
-      if (period != "MC" && Cflag) {
-	//Dilution
-	// {{{
-	AvgDilution += TMath::Abs(dilutionFactor);
-	AvgDilution_corrected += 0.95*TMath::Abs(dilutionFactor);
-	AvgDilution_count++;
-
-	Double_t correct_dil = 0.95*TMath::Abs(dilutionFactor);
-	BinAvg(AvgDil_xN, AvgDil_xN_count, x_target, xN_bounds, correct_dil);
-	BinAvg(AvgDil_xPi, AvgDil_xPi_count, x_beam, xPi_bounds, correct_dil);
-	BinAvg(AvgDil_xF, AvgDil_xF_count, x_feynman, xF_bounds, correct_dil);
-	BinAvg(AvgDil_pT, AvgDil_pT_count, q_transverse, pT_bounds, correct_dil);
-	BinAvg(AvgDil_M, AvgDil_M_count, vDiMuon_invM, M_bounds, correct_dil);
-	BinAvg(AvgDil_rad, AvgDil_rad_count, radius, rad_bounds, correct_dil);
-	BinAvg(AvgDil_vxZ_upstream, AvgDil_vxZ_count_UpStream, vx_z,
-	       vxZ_upstream_bounds, correct_dil);
-
-	BinAvg(AvgDil_xN_UpStream, AvgDil_xN_count_UpStream, x_target,
-	       xN_bounds, correct_dil);
-	BinAvg(AvgDil_xPi_UpStream, AvgDil_xPi_count_UpStream, x_beam,
-	       xPi_bounds, correct_dil);
-	BinAvg(AvgDil_xF_UpStream, AvgDil_xF_count_UpStream, x_feynman,
-	       xF_bounds, correct_dil);
-	BinAvg(AvgDil_pT_UpStream, AvgDil_pT_count_UpStream, q_transverse,
-	       pT_bounds, correct_dil);
-	BinAvg(AvgDil_M_UpStream, AvgDil_M_count_UpStream, vDiMuon_invM,
-	       M_bounds, correct_dil);
-	BinAvg(AvgDil_rad_UpStream, AvgDil_rad_count_UpStream, radius, rad_bounds,
-	       correct_dil);
-	// }}}
-
-	//Polarization
-	// {{{
-	Double_t pol = TMath::Abs(Polarization);
-	BinAvg(AvgPol_xN_UpStream, AvgPol_xN_count_UpStream, x_target,
-	       xN_bounds, pol);
-	BinAvg(AvgPol_xPi_UpStream, AvgPol_xPi_count_UpStream, x_beam,
-	       xPi_bounds, pol);
-	BinAvg(AvgPol_xF_UpStream, AvgPol_xF_count_UpStream, x_feynman,
-	       xF_bounds, pol);
-	BinAvg(AvgPol_pT_UpStream, AvgPol_pT_count_UpStream, q_transverse,
-	       pT_bounds, pol);
-	BinAvg(AvgPol_M_UpStream, AvgPol_M_count_UpStream, vDiMuon_invM,
-	       M_bounds, pol);
-	BinAvg(AvgPol_rad_UpStream, AvgPol_rad_count_UpStream, radius,
-	       rad_bounds, pol);
-	BinAvg(AvgPol_vxZ_upstream,AvgPol_vxZ_count_UpStream, vx_z,
-	       vxZ_upstream_bounds, pol);
-	// }}}
-	  
-	if (Spin[0] > 0) {//Polarized Up
-	  //Dilution/Polarization
-	  // {{{
-	  BinAvg(AvgDil_xN_UpStream_Up, AvgDil_xN_count_UpStream_Up, x_target,
-		 xN_bounds, correct_dil);
-	  BinAvg(AvgDil_xPi_UpStream_Up, AvgDil_xPi_count_UpStream_Up, x_beam,
-		 xPi_bounds, correct_dil);
-	  BinAvg(AvgDil_xF_UpStream_Up, AvgDil_xF_count_UpStream_Up, x_feynman,
-		 xF_bounds, correct_dil);
-	  BinAvg(AvgDil_pT_UpStream_Up,AvgDil_pT_count_UpStream_Up,q_transverse,
-		 pT_bounds, correct_dil);  
-	  BinAvg(AvgDil_M_UpStream_Up, AvgDil_M_count_UpStream_Up, vDiMuon_invM,
-		 M_bounds, correct_dil);
-	  BinAvg(AvgDil_rad_UpStream_Up, AvgDil_rad_count_UpStream_Up, radius,
-		 rad_bounds, correct_dil);
-	  BinAvg(AvgDil_vxZ_upstream_Up, AvgDil_vxZ_count_UpStream_Up, vx_z,
-		 vxZ_upstream_bounds, correct_dil);
-
-	  BinAvg(AvgPol_xN_UpStream_Up, AvgPol_xN_count_UpStream_Up, x_target,
-		 xN_bounds, pol);
-	  BinAvg(AvgPol_xPi_UpStream_Up, AvgPol_xPi_count_UpStream_Up, x_beam,
-		 xPi_bounds, pol);
-	  BinAvg(AvgPol_xF_UpStream_Up, AvgPol_xF_count_UpStream_Up, x_feynman,
-		 xF_bounds, pol);
-	  BinAvg(AvgPol_pT_UpStream_Up,AvgPol_pT_count_UpStream_Up,q_transverse,
-		 pT_bounds, pol);  
-	  BinAvg(AvgPol_M_UpStream_Up, AvgPol_M_count_UpStream_Up, vDiMuon_invM,
-		 M_bounds, pol);
-	  BinAvg(AvgPol_rad_UpStream_Up, AvgPol_rad_count_UpStream_Up, radius,
-		 rad_bounds, pol);
-	  BinAvg(AvgPol_vxZ_upstream_Up, AvgPol_vxZ_count_UpStream_Up, vx_z,
-		 vxZ_upstream_bounds, pol);
-	  // }}}
-	}
-	else if (Spin[0] < 0){//Polarized Down
-	  //Dilution/Polarization
-	  // {{{
-	  BinAvg(AvgDil_xN_UpStream_Down, AvgDil_xN_count_UpStream_Down, 
-		 x_target, xN_bounds, correct_dil);
-	  BinAvg(AvgDil_xPi_UpStream_Down, AvgDil_xPi_count_UpStream_Down, 
-		 x_beam, xPi_bounds, correct_dil);
-	  BinAvg(AvgDil_xF_UpStream_Down, AvgDil_xF_count_UpStream_Down, 
-		 x_feynman, xF_bounds, correct_dil);
-	  BinAvg(AvgDil_pT_UpStream_Down,AvgDil_pT_count_UpStream_Down,
-		 q_transverse, pT_bounds, correct_dil);  
-	  BinAvg(AvgDil_M_UpStream_Down, AvgDil_M_count_UpStream_Down,
-		 vDiMuon_invM, M_bounds, correct_dil);
-	  BinAvg(AvgDil_rad_UpStream_Down, AvgDil_rad_count_UpStream_Down, radius,
-		 rad_bounds, correct_dil);
-	  BinAvg(AvgDil_vxZ_upstream_Down, AvgDil_vxZ_count_UpStream_Down, vx_z,
-		 vxZ_upstream_bounds, correct_dil);
-
-	  BinAvg(AvgPol_xN_UpStream_Down, AvgPol_xN_count_UpStream_Down, 
-		 x_target, xN_bounds, pol);
-	  BinAvg(AvgPol_xPi_UpStream_Down, AvgPol_xPi_count_UpStream_Down, 
-		 x_beam, xPi_bounds, pol);
-	  BinAvg(AvgPol_xF_UpStream_Down, AvgPol_xF_count_UpStream_Down, 
-		 x_feynman, xF_bounds, pol);
-	  BinAvg(AvgPol_pT_UpStream_Down,AvgPol_pT_count_UpStream_Down,
-		 q_transverse, pT_bounds, pol);  
-	  BinAvg(AvgPol_M_UpStream_Down, AvgPol_M_count_UpStream_Down,
-		 vDiMuon_invM, M_bounds, pol);
-	  BinAvg(AvgPol_rad_UpStream_Down, AvgPol_rad_count_UpStream_Down, radius,
-		 rad_bounds, pol);
-	  BinAvg(AvgPol_vxZ_upstream_Down, AvgPol_vxZ_count_UpStream_Down, vx_z,
-		 vxZ_upstream_bounds, pol);
-	  // }}}
-	}
-
-	AvgPolarization += pol;
-	AvgPolarization_count++;
-      }//Not MC
 
       sort_vxZ_upstream.push_back(vx_z);
     }//Up stream
     else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
-      if (period != "MC" && Cflag) {
-	//Dilution
-	// {{{
-	AvgDilution += TMath::Abs(dilutionFactor);
-	AvgDilution_corrected += 0.91*TMath::Abs(dilutionFactor);
-	AvgDilution_count++;
-
-	Double_t correct_dil = 0.91*TMath::Abs(dilutionFactor);
-	BinAvg(AvgDil_xN, AvgDil_xN_count, x_target, xN_bounds, correct_dil);
-	BinAvg(AvgDil_xPi, AvgDil_xPi_count, x_beam, xPi_bounds, correct_dil);
-	BinAvg(AvgDil_xF, AvgDil_xF_count, x_feynman, xF_bounds, correct_dil);
-	BinAvg(AvgDil_pT, AvgDil_pT_count, q_transverse, pT_bounds, correct_dil);
-	BinAvg(AvgDil_M, AvgDil_M_count, vDiMuon_invM, M_bounds, correct_dil);
-	BinAvg(AvgDil_rad, AvgDil_rad_count, radius, rad_bounds, correct_dil);
-	BinAvg(AvgDil_vxZ_downstream, AvgDil_vxZ_count_DownStream, vx_z,
-	       vxZ_downstream_bounds, correct_dil);
-
-	BinAvg(AvgDil_xN_DownStream, AvgDil_xN_count_DownStream, x_target,
-	       xN_bounds, correct_dil);
-	BinAvg(AvgDil_xPi_DownStream, AvgDil_xPi_count_DownStream, x_beam,
-	       xPi_bounds, correct_dil);
-	BinAvg(AvgDil_xF_DownStream, AvgDil_xF_count_DownStream, x_feynman,
-	       xF_bounds, correct_dil);
-	BinAvg(AvgDil_pT_DownStream, AvgDil_pT_count_DownStream, q_transverse,
-	       pT_bounds, correct_dil);
-	BinAvg(AvgDil_M_DownStream, AvgDil_M_count_DownStream, vDiMuon_invM,
-	       M_bounds, correct_dil);
-	BinAvg(AvgDil_rad_DownStream, AvgDil_rad_count_DownStream, radius,
-	       rad_bounds, correct_dil);
-	BinAvg(AvgDil_vxZ_downstream,AvgDil_vxZ_count_DownStream, vx_z,
-	       vxZ_downstream_bounds, correct_dil);
-	// }}}
-
-	//Polarization
-	// {{{
-	Double_t pol = TMath::Abs(Polarization);
-	BinAvg(AvgPol_xN_DownStream, AvgPol_xN_count_DownStream, x_target,
-	       xN_bounds, pol);
-	BinAvg(AvgPol_xPi_DownStream, AvgPol_xPi_count_DownStream, x_beam,
-	       xPi_bounds, pol);
-	BinAvg(AvgPol_xF_DownStream, AvgPol_xF_count_DownStream, x_feynman,
-	       xF_bounds, pol);
-	BinAvg(AvgPol_pT_DownStream, AvgPol_pT_count_DownStream, q_transverse,
-	       pT_bounds, pol);
-	BinAvg(AvgPol_M_DownStream, AvgPol_M_count_DownStream, vDiMuon_invM,
-	       M_bounds, pol);
-	BinAvg(AvgPol_rad_DownStream, AvgPol_rad_count_DownStream, radius,
-	       rad_bounds, pol);
-	BinAvg(AvgPol_vxZ_downstream,AvgPol_vxZ_count_DownStream, vx_z,
-	       vxZ_downstream_bounds, pol);
-	// }}}
-
-	if (Spin[0] > 0) {//Polarized Up
-	  //Dilution/Polarization
-	  // {{{
-	  BinAvg(AvgDil_xN_DownStream_Up, AvgDil_xN_count_DownStream_Up, 
-		 x_target, xN_bounds, correct_dil);
-	  BinAvg(AvgDil_xPi_DownStream_Up, AvgDil_xPi_count_DownStream_Up, 
-		 x_beam, xPi_bounds, correct_dil);
-	  BinAvg(AvgDil_xF_DownStream_Up, AvgDil_xF_count_DownStream_Up, 
-		 x_feynman, xF_bounds, correct_dil);
-	  BinAvg(AvgDil_pT_DownStream_Up,AvgDil_pT_count_DownStream_Up,
-		 q_transverse, pT_bounds, correct_dil);  
-	  BinAvg(AvgDil_M_DownStream_Up, AvgDil_M_count_DownStream_Up,
-		 vDiMuon_invM, M_bounds, correct_dil);
-	  BinAvg(AvgDil_rad_DownStream_Up, AvgDil_rad_count_DownStream_Up, radius,
-		 rad_bounds, correct_dil);
-	  BinAvg(AvgDil_vxZ_downstream_Up, AvgDil_vxZ_count_DownStream_Up, vx_z,
-		 vxZ_downstream_bounds, correct_dil);
-
-	  BinAvg(AvgPol_xN_DownStream_Up, AvgPol_xN_count_DownStream_Up, 
-		 x_target, xN_bounds, pol);
-	  BinAvg(AvgPol_xPi_DownStream_Up, AvgPol_xPi_count_DownStream_Up, 
-		 x_beam, xPi_bounds, pol);
-	  BinAvg(AvgPol_xF_DownStream_Up, AvgPol_xF_count_DownStream_Up, 
-		 x_feynman, xF_bounds, pol);
-	  BinAvg(AvgPol_pT_DownStream_Up,AvgPol_pT_count_DownStream_Up,
-		 q_transverse, pT_bounds, pol);  
-	  BinAvg(AvgPol_M_DownStream_Up, AvgPol_M_count_DownStream_Up,
-		 vDiMuon_invM, M_bounds, pol);
-	  BinAvg(AvgPol_rad_DownStream_Up, AvgPol_rad_count_DownStream_Up, radius,
-		 rad_bounds, pol);
-	  BinAvg(AvgPol_vxZ_downstream_Up, AvgPol_vxZ_count_DownStream_Up, vx_z,
-		 vxZ_downstream_bounds, pol);
-	  // }}}
-	}
-	else if (Spin[0] < 0){//Polarized Down
-	  //Dilution/Polarization
-	  // {{{
-	  BinAvg(AvgDil_xN_DownStream_Down, AvgDil_xN_count_DownStream_Down, 
-		 x_target, xN_bounds, correct_dil);
-	  BinAvg(AvgDil_xPi_DownStream_Down, AvgDil_xPi_count_DownStream_Down, 
-		 x_beam, xPi_bounds, correct_dil);
-	  BinAvg(AvgDil_xF_DownStream_Down, AvgDil_xF_count_DownStream_Down, 
-		 x_feynman, xF_bounds, correct_dil);
-	  BinAvg(AvgDil_pT_DownStream_Down,AvgDil_pT_count_DownStream_Down,
-		 q_transverse, pT_bounds, correct_dil);  
-	  BinAvg(AvgDil_M_DownStream_Down, AvgDil_M_count_DownStream_Down,
-		 vDiMuon_invM, M_bounds, correct_dil);
-	  BinAvg(AvgDil_rad_DownStream_Down, AvgDil_rad_count_DownStream_Down,
-		 radius, rad_bounds, correct_dil);
-	  BinAvg(AvgDil_vxZ_downstream_Down, AvgDil_vxZ_count_DownStream_Down,
-		 vx_z, vxZ_downstream_bounds, correct_dil);
-
-	  BinAvg(AvgPol_xN_DownStream_Down, AvgPol_xN_count_DownStream_Down, 
-		 x_target, xN_bounds, pol);
-	  BinAvg(AvgPol_xPi_DownStream_Down, AvgPol_xPi_count_DownStream_Down, 
-		 x_beam, xPi_bounds, pol);
-	  BinAvg(AvgPol_xF_DownStream_Down, AvgPol_xF_count_DownStream_Down, 
-		 x_feynman, xF_bounds, pol);
-	  BinAvg(AvgPol_pT_DownStream_Down,AvgPol_pT_count_DownStream_Down,
-		 q_transverse, pT_bounds, pol);  
-	  BinAvg(AvgPol_M_DownStream_Down, AvgPol_M_count_DownStream_Down,
-		 vDiMuon_invM, M_bounds, pol);
-	  BinAvg(AvgPol_rad_DownStream_Down, AvgPol_rad_count_DownStream_Down,
-		 radius, rad_bounds, pol);
-	  BinAvg(AvgPol_vxZ_downstream_Down, AvgPol_vxZ_count_DownStream_Down,
-		 vx_z, vxZ_downstream_bounds, pol);
-	  // }}}
-	}
-
-	AvgPolarization += pol;
-	AvgPolarization_count++;
-      }//Not MC
 
       sort_vxZ_downstream.push_back(vx_z);
     }//Down Stream
@@ -845,13 +487,13 @@ int main(int argc, char **argv){
     sort_rad.push_back(radius);
 
   }//tree entries
-  
+
 
   //Print bin boundaries and average values
   if (sort_xF.size() != 0){
     if (!Qflag) outFile += "binValues.txt";
     ofstream binValueFile(outFile, std::ofstream::trunc);
-    
+
     std::sort(sort_xTarg.begin(), sort_xTarg.end() );
     PrintBin(binValueFile, sort_xTarg, nBins, "xN");
     std::sort(sort_xBeam.begin(), sort_xBeam.end() );
@@ -868,219 +510,19 @@ int main(int argc, char **argv){
     PrintBin(binValueFile, sort_vxZ_upstream, nBins, "vxZ_upstream");
     std::sort(sort_vxZ_downstream.begin(), sort_vxZ_downstream.end() );
     PrintBin(binValueFile, sort_vxZ_downstream, nBins, "vxZ_downstream");
-    
-    binValueFile.close();
 
+    binValueFile.close();
     cout << "File: " << outFile << " was written" << endl;
   }
-  for (Int_t i=0; i<nBins; i++) {
-    //Dilution
-    ///////////////
-    Dil_xN[i] = AvgDil_xN[i]/AvgDil_xN_count[i];
-    Dil_xPi[i] = AvgDil_xPi[i]/AvgDil_xPi_count[i];
-    Dil_xF[i] = AvgDil_xF[i]/AvgDil_xF_count[i];
-    Dil_pT[i] = AvgDil_pT[i]/AvgDil_pT_count[i];
-    Dil_M[i] = AvgDil_M[i]/AvgDil_M_count[i];
-    Dil_rad[i] = AvgDil_rad[i]/AvgDil_rad_count[i];
-    Dil_vxZ_upstream[i] = AvgDil_vxZ_upstream[i]/AvgDil_vxZ_count_UpStream[i];
-    Dil_vxZ_downstream[i] =
-      AvgDil_vxZ_downstream[i]/AvgDil_vxZ_count_DownStream[i];
-
-    //UpStream
-    Dil_xN_UpStream[i] = AvgDil_xN_UpStream[i]/AvgDil_xN_count_UpStream[i];
-    Dil_xPi_UpStream[i] = AvgDil_xPi_UpStream[i]/AvgDil_xPi_count_UpStream[i];
-    Dil_xF_UpStream[i] = AvgDil_xF_UpStream[i]/AvgDil_xF_count_UpStream[i];
-    Dil_pT_UpStream[i] = AvgDil_pT_UpStream[i]/AvgDil_pT_count_UpStream[i];
-    Dil_M_UpStream[i] = AvgDil_M_UpStream[i]/AvgDil_M_count_UpStream[i];
-    Dil_rad_UpStream[i] = AvgDil_rad_UpStream[i]/AvgDil_rad_count_UpStream[i];
-
-    //UpStream Polarized Up
-    Dil_xN_UpStream_Up[i] = 
-      AvgDil_xN_UpStream_Up[i]/AvgDil_xN_count_UpStream_Up[i];
-    Dil_xPi_UpStream_Up[i] = 
-      AvgDil_xPi_UpStream_Up[i]/AvgDil_xPi_count_UpStream_Up[i];
-    Dil_xF_UpStream_Up[i] = 
-      AvgDil_xF_UpStream_Up[i]/AvgDil_xF_count_UpStream_Up[i];
-    Dil_pT_UpStream_Up[i] = 
-      AvgDil_pT_UpStream_Up[i]/AvgDil_pT_count_UpStream_Up[i];
-    Dil_M_UpStream_Up[i] = 
-      AvgDil_M_UpStream_Up[i]/AvgDil_M_count_UpStream_Up[i];
-    Dil_rad_UpStream_Up[i] = 
-      AvgDil_rad_UpStream_Up[i]/AvgDil_rad_count_UpStream_Up[i];
-    Dil_vxZ_upstream_Up[i] = 
-      AvgDil_vxZ_upstream_Up[i]/AvgDil_vxZ_count_UpStream_Up[i];
-
-    //UpStream Polarized Down
-    Dil_xN_UpStream_Down[i] = 
-      AvgDil_xN_UpStream_Down[i]/AvgDil_xN_count_UpStream_Down[i];
-    Dil_xPi_UpStream_Down[i] = 
-      AvgDil_xPi_UpStream_Down[i]/AvgDil_xPi_count_UpStream_Down[i];
-    Dil_xF_UpStream_Down[i] = 
-      AvgDil_xF_UpStream_Down[i]/AvgDil_xF_count_UpStream_Down[i];
-    Dil_pT_UpStream_Down[i] =
-      AvgDil_pT_UpStream_Down[i]/AvgDil_pT_count_UpStream_Down[i];
-    Dil_M_UpStream_Down[i] =
-      AvgDil_M_UpStream_Down[i]/AvgDil_M_count_UpStream_Down[i];
-    Dil_rad_UpStream_Down[i] = 
-      AvgDil_rad_UpStream_Down[i]/AvgDil_rad_count_UpStream_Down[i];
-    Dil_vxZ_upstream_Down[i] = 
-      AvgDil_vxZ_upstream_Down[i]/AvgDil_vxZ_count_UpStream_Down[i];
-
-    //DownStream
-    Dil_xN_DownStream[i] =AvgDil_xN_DownStream[i]/AvgDil_xN_count_DownStream[i];
-    Dil_xPi_DownStream[i]=
-      AvgDil_xPi_DownStream[i]/AvgDil_xPi_count_DownStream[i];
-    Dil_xF_DownStream[i] =AvgDil_xF_DownStream[i]/AvgDil_xF_count_DownStream[i];
-    Dil_pT_DownStream[i] =AvgDil_pT_DownStream[i]/AvgDil_pT_count_DownStream[i];
-    Dil_M_DownStream[i] = AvgDil_M_DownStream[i]/AvgDil_M_count_DownStream[i];
-    Dil_rad_DownStream[i] =
-      AvgDil_rad_DownStream[i]/AvgDil_rad_count_DownStream[i];
-
-    //DownStream Polarized Up
-    Dil_xN_DownStream_Up[i] =
-      AvgDil_xN_DownStream_Up[i]/AvgDil_xN_count_DownStream_Up[i];
-    Dil_xPi_DownStream_Up[i]=
-      AvgDil_xPi_DownStream_Up[i]/AvgDil_xPi_count_DownStream_Up[i];
-    Dil_xF_DownStream_Up[i] =
-      AvgDil_xF_DownStream_Up[i]/AvgDil_xF_count_DownStream_Up[i];
-    Dil_pT_DownStream_Up[i] =
-      AvgDil_pT_DownStream_Up[i]/AvgDil_pT_count_DownStream_Up[i];
-    Dil_M_DownStream_Up[i] =
-      AvgDil_M_DownStream_Up[i]/AvgDil_M_count_DownStream_Up[i];
-    Dil_rad_DownStream_Up[i] = 
-      AvgDil_rad_DownStream_Up[i]/AvgDil_rad_count_DownStream_Up[i];
-    Dil_vxZ_downstream_Up[i] = 
-      AvgDil_vxZ_downstream_Up[i]/AvgDil_vxZ_count_DownStream_Up[i];
-	
-    //DownStream Polarized Down
-    Dil_xN_DownStream_Down[i] =
-      AvgDil_xN_DownStream_Down[i]/AvgDil_xN_count_DownStream_Down[i];
-    Dil_xPi_DownStream_Down[i]=
-      AvgDil_xPi_DownStream_Down[i]/AvgDil_xPi_count_DownStream_Down[i];
-    Dil_xF_DownStream_Down[i] =
-      AvgDil_xF_DownStream_Down[i]/AvgDil_xF_count_DownStream_Down[i];
-    Dil_pT_DownStream_Down[i] =
-      AvgDil_pT_DownStream_Down[i]/AvgDil_pT_count_DownStream_Down[i];
-    Dil_M_DownStream_Down[i] =
-      AvgDil_M_DownStream_Down[i]/AvgDil_M_count_DownStream_Down[i];
-    Dil_rad_DownStream_Down[i] = 
-      AvgDil_rad_DownStream_Down[i]/AvgDil_rad_count_DownStream_Down[i];
-    Dil_vxZ_downstream_Down[i] = 
-      AvgDil_vxZ_downstream_Down[i]/AvgDil_vxZ_count_DownStream_Down[i];
-
-
-    //Polarization
-    ////////////////
-    Pol_xN[i] = AvgPol_xN[i]/AvgPol_xN_count[i];
-    Pol_xPi[i] = AvgPol_xPi[i]/AvgPol_xPi_count[i];
-    Pol_xF[i] = AvgPol_xF[i]/AvgPol_xF_count[i];
-    Pol_pT[i] = AvgPol_pT[i]/AvgPol_pT_count[i];
-    Pol_M[i] = AvgPol_M[i]/AvgPol_M_count[i];
-    Pol_rad[i] = AvgPol_rad[i]/AvgPol_rad_count[i];
-    Pol_vxZ_upstream[i] = AvgPol_vxZ_upstream[i]/AvgPol_vxZ_count_UpStream[i];
-    Pol_vxZ_downstream[i] =
-      AvgPol_vxZ_downstream[i]/AvgPol_vxZ_count_DownStream[i];
-
-    //UpStream////////////
-    Pol_xN_UpStream[i] = AvgPol_xN_UpStream[i]/AvgPol_xN_count_UpStream[i];
-    Pol_xPi_UpStream[i] = AvgPol_xPi_UpStream[i]/AvgPol_xPi_count_UpStream[i];
-    Pol_xF_UpStream[i] = AvgPol_xF_UpStream[i]/AvgPol_xF_count_UpStream[i];
-    Pol_pT_UpStream[i] = AvgPol_pT_UpStream[i]/AvgPol_pT_count_UpStream[i];
-    Pol_M_UpStream[i] = AvgPol_M_UpStream[i]/AvgPol_M_count_UpStream[i];
-    Pol_rad_UpStream[i] = AvgPol_rad_UpStream[i]/AvgPol_rad_count_UpStream[i];
-
-    //UpStream Polarized Up
-    Pol_xN_UpStream_Up[i] = 
-      AvgPol_xN_UpStream_Up[i]/AvgPol_xN_count_UpStream_Up[i];
-    Pol_xPi_UpStream_Up[i] = 
-      AvgPol_xPi_UpStream_Up[i]/AvgPol_xPi_count_UpStream_Up[i];
-    Pol_xF_UpStream_Up[i] = 
-      AvgPol_xF_UpStream_Up[i]/AvgPol_xF_count_UpStream_Up[i];
-    Pol_pT_UpStream_Up[i] = 
-      AvgPol_pT_UpStream_Up[i]/AvgPol_pT_count_UpStream_Up[i];
-    Pol_M_UpStream_Up[i] = 
-      AvgPol_M_UpStream_Up[i]/AvgPol_M_count_UpStream_Up[i];
-    Pol_rad_UpStream_Up[i] = 
-      AvgPol_rad_UpStream_Up[i]/AvgPol_rad_count_UpStream_Up[i];
-    Pol_vxZ_upstream_Up[i] = 
-      AvgPol_vxZ_upstream_Up[i]/AvgPol_vxZ_count_UpStream_Up[i];
-
-    //UpStream Polarized Down
-    Pol_xN_UpStream_Down[i] = 
-      AvgPol_xN_UpStream_Down[i]/AvgPol_xN_count_UpStream_Down[i];
-    Pol_xPi_UpStream_Down[i] = 
-      AvgPol_xPi_UpStream_Down[i]/AvgPol_xPi_count_UpStream_Down[i];
-    Pol_xF_UpStream_Down[i] = 
-      AvgPol_xF_UpStream_Down[i]/AvgPol_xF_count_UpStream_Down[i];
-    Pol_pT_UpStream_Down[i] =
-      AvgPol_pT_UpStream_Down[i]/AvgPol_pT_count_UpStream_Down[i];
-    Pol_M_UpStream_Down[i] =
-      AvgPol_M_UpStream_Down[i]/AvgPol_M_count_UpStream_Down[i];
-    Pol_rad_UpStream_Down[i] = 
-      AvgPol_rad_UpStream_Down[i]/AvgPol_rad_count_UpStream_Down[i];
-    Pol_vxZ_upstream_Down[i] = 
-      AvgPol_vxZ_upstream_Down[i]/AvgPol_vxZ_count_UpStream_Down[i];
-	
-    //DownStream////////////
-    Pol_xN_DownStream[i] =AvgPol_xN_DownStream[i]/AvgPol_xN_count_DownStream[i];
-    Pol_xPi_DownStream[i]=
-      AvgPol_xPi_DownStream[i]/AvgPol_xPi_count_DownStream[i];
-    Pol_xF_DownStream[i] =AvgPol_xF_DownStream[i]/AvgPol_xF_count_DownStream[i];
-    Pol_pT_DownStream[i] =AvgPol_pT_DownStream[i]/AvgPol_pT_count_DownStream[i];
-    Pol_M_DownStream[i] = AvgPol_M_DownStream[i]/AvgPol_M_count_DownStream[i];
-    Pol_rad_DownStream[i] =
-      AvgPol_rad_DownStream[i]/AvgPol_rad_count_DownStream[i];
-
-    //DownStream Polarized Up
-    Pol_xN_DownStream_Up[i] =
-      AvgPol_xN_DownStream_Up[i]/AvgPol_xN_count_DownStream_Up[i];
-    Pol_xPi_DownStream_Up[i]=
-      AvgPol_xPi_DownStream_Up[i]/AvgPol_xPi_count_DownStream_Up[i];
-    Pol_xF_DownStream_Up[i] =
-      AvgPol_xF_DownStream_Up[i]/AvgPol_xF_count_DownStream_Up[i];
-    Pol_pT_DownStream_Up[i] =
-      AvgPol_pT_DownStream_Up[i]/AvgPol_pT_count_DownStream_Up[i];
-    Pol_M_DownStream_Up[i] =
-      AvgPol_M_DownStream_Up[i]/AvgPol_M_count_DownStream_Up[i];
-    Pol_rad_DownStream_Up[i] = 
-      AvgPol_rad_DownStream_Up[i]/AvgPol_rad_count_DownStream_Up[i];
-    Pol_vxZ_downstream_Up[i] = 
-      AvgPol_vxZ_downstream_Up[i]/AvgPol_vxZ_count_DownStream_Up[i];
-    
-	
-    //DownStream Polarized Down
-    Pol_xN_DownStream_Down[i] =
-      AvgPol_xN_DownStream_Down[i]/AvgPol_xN_count_DownStream_Down[i];
-    Pol_xPi_DownStream_Down[i]=
-      AvgPol_xPi_DownStream_Down[i]/AvgPol_xPi_count_DownStream_Down[i];
-    Pol_xF_DownStream_Down[i] =
-      AvgPol_xF_DownStream_Down[i]/AvgPol_xF_count_DownStream_Down[i];
-    Pol_pT_DownStream_Down[i] =
-      AvgPol_pT_DownStream_Down[i]/AvgPol_pT_count_DownStream_Down[i];
-    Pol_M_DownStream_Down[i] =
-      AvgPol_M_DownStream_Down[i]/AvgPol_M_count_DownStream_Down[i];
-    Pol_rad_DownStream_Down[i] = 
-      AvgPol_rad_DownStream_Down[i]/AvgPol_rad_count_DownStream_Down[i];
-    Pol_vxZ_downstream_Down[i] = 
-      AvgPol_vxZ_downstream_Down[i]/AvgPol_vxZ_count_DownStream_Down[i];
-	
-  }//Dilution and polariztion setup loop
-
-  TVectorD Dil_int(1), Pol_int(1);
-  Dil_int[0] = AvgDilution_corrected/AvgDilution_count;
-  Pol_int[0] = AvgPolarization/AvgPolarization_count;
-
-  if (period != "MC") {
-    cout << " " << endl;
-    cout << "Average dilution factor " << AvgDilution_corrected/AvgDilution_count;
-    cout << endl;
-    cout << "Average polarization " << AvgPolarization/AvgPolarization_count;
-    cout << endl;;
+  else{
+    cout << "" << endl;
+    cout << "" << endl;
+    cout <<"Error:"<< endl;
+    cout << "sorting vectors are 0 size" << endl;
+    cout << "No file written" << endl;
+    cout << "" << endl;
+    cout << "" << endl;
   }
-  
-  cout << "!!!!!!!!!!!!!!!" << endl;
-  cout << "Code Finished" << endl;
-  cout << "!!!!!!!!!!!!!!!" << endl;
 
   //Cuts histogram
   Int_t nRealCuts = 6;
@@ -1091,6 +533,10 @@ int main(int argc, char **argv){
     Int_t bin_index = hCuts->GetXaxis()->FindBin(j);
     hCuts->GetXaxis()->SetBinLabel(bin_index, cutNames[i]);
   }
+
+  cout << "!!!!!!!!!!!!!!!" << endl;
+  cout << "Code Finished" << endl;
+  cout << "!!!!!!!!!!!!!!!" << endl;
 
   theApp.Run();//Needed to make root graphics work on C++
 }//main

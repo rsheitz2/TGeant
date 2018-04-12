@@ -33,4 +33,4 @@ void PrintBin(std::ofstream &f_out, std::vector<Double_t> &sorted, Int_t nBins, 
     f_out << binAvg[i] << std::endl;
   }
   std::cout << " " << std::endl;
-}
+}//PrintBin
