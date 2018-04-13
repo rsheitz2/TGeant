@@ -350,33 +350,12 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("NTrack", &NTrack);
   T1->SetBranchAddress("NVertex", &NVertex);
   T1->SetBranchAddress("trigMask", &trigMask);
-  T1->SetBranchAddress("MasterTrigMask", &MasterTrigMask);
-  T1->SetBranchAddress("RunNum", &RunNum);
-  T1->SetBranchAddress("SpillNum", &SpillNum);
   T1->SetBranchAddress("event", &event);
   //DY-variables
   T1->SetBranchAddress("x_beam", &x_beam);
   T1->SetBranchAddress("x_target", &x_target);
   T1->SetBranchAddress("x_feynman", &x_feynman);
   T1->SetBranchAddress("q_transverse", &q_transverse);
-  //Target Polarization
-  T1->SetBranchAddress("avgUpStream", &avgUpStream);
-  T1->SetBranchAddress("avgDownStream", &avgDownStream);
-  T1->SetBranchAddress("N14_UpStream", &N14_UpStream);
-  T1->SetBranchAddress("N14_DownStream", &N14_DownStream);
-  T1->SetBranchAddress("upStreamCoil1", &upStreamCoil1);
-  T1->SetBranchAddress("upStreamCoil2", &upStreamCoil2);
-  T1->SetBranchAddress("upStreamCoil3", &upStreamCoil3);
-  T1->SetBranchAddress("upStreamCoil4", &upStreamCoil4);
-  T1->SetBranchAddress("upStreamCoil5", &upStreamCoil5);
-  T1->SetBranchAddress("downStreamCoil6", &downStreamCoil6);
-  T1->SetBranchAddress("downStreamCoil7", &downStreamCoil7);
-  T1->SetBranchAddress("downStreamCoil8", &downStreamCoil8);
-  T1->SetBranchAddress("downStreamCoil9", &downStreamCoil9);
-  T1->SetBranchAddress("downStreamCoil10", &downStreamCoil10);
-  T1->SetBranchAddress("Polarization", &Polarization);
-  T1->SetBranchAddress("dilutionFactor", &dilutionFactor);
-  T1->SetBranchAddress("error_dilutionFactor", &error_dilutionFactor);
   //Positions
   T1->SetBranchAddress("SM1_p1x", &SM1_p1x);
   T1->SetBranchAddress("SM1_p1y", &SM1_p1y);
@@ -398,6 +377,31 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("HG02_y2_p1y", &HG02_y2_p1y);
   T1->SetBranchAddress("HG02_y2_p2x", &HG02_y2_p2x);
   T1->SetBranchAddress("HG02_y2_p2y", &HG02_y2_p2y);
+  //Real Data Only 
+  if (period != "MC"){
+	  T1->SetBranchAddress("MasterTrigMask", &MasterTrigMask);
+	  T1->SetBranchAddress("RunNum", &RunNum);
+	  T1->SetBranchAddress("SpillNum", &SpillNum);
+	  //Target Polarization
+	  T1->SetBranchAddress("avgUpStream", &avgUpStream);
+	  T1->SetBranchAddress("avgDownStream", &avgDownStream);
+	  T1->SetBranchAddress("N14_UpStream", &N14_UpStream);
+	  T1->SetBranchAddress("N14_DownStream", &N14_DownStream);
+	  T1->SetBranchAddress("upStreamCoil1", &upStreamCoil1);
+	  T1->SetBranchAddress("upStreamCoil2", &upStreamCoil2);
+	  T1->SetBranchAddress("upStreamCoil3", &upStreamCoil3);
+	  T1->SetBranchAddress("upStreamCoil4", &upStreamCoil4);
+	  T1->SetBranchAddress("upStreamCoil5", &upStreamCoil5);
+	  T1->SetBranchAddress("downStreamCoil6", &downStreamCoil6);
+	  T1->SetBranchAddress("downStreamCoil7", &downStreamCoil7);
+	  T1->SetBranchAddress("downStreamCoil8", &downStreamCoil8);
+	  T1->SetBranchAddress("downStreamCoil9", &downStreamCoil9);
+	  T1->SetBranchAddress("downStreamCoil10", &downStreamCoil10);
+	  T1->SetBranchAddress("Polarization", &Polarization);
+	  T1->SetBranchAddress("dilutionFactor", &dilutionFactor);
+	  T1->SetBranchAddress("error_dilutionFactor", &error_dilutionFactor);
+
+  }
 
 
   //Cut histograms
