@@ -15,13 +15,16 @@ endif
 
 OBJS_SRC = $(SRC)/functions.o
 HEADER = $(SRC)/common.hxx $(SRC)/function.h
-EXE = avgBinBounds
+EXE = avgBinBounds genAvgBinBounds
 
 all: $(EXE)
 .PHONY : all
 
 
 avgBinBounds: avgBinBounds.C $(OBJS_SRC) 
+	$(CC) -o $@ $(OPTM) $@.C $(OBJS_SRC) $(INC_PATH) $(CFLAGS)
+
+genAvgBinBounds: genAvgBinBounds.C $(OBJS_SRC) 
 	$(CC) -o $@ $(OPTM) $@.C $(OBJS_SRC) $(INC_PATH) $(CFLAGS)
 
 #SRC files
