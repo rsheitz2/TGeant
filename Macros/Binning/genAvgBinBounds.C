@@ -24,6 +24,9 @@ int main(int argc, char **argv){
     cout << "" << endl;
     cout << "---Additional Options---" << endl;
     cout << "Option:  -D        (debug mode, only loop over 10000 events)"<<endl;
+    cout << "Option:  -R        (reducde mode, only loop over 100000 events)"<<endl;
+	cout << "             (To be used with large data sets)" << endl;
+	cout << "      (-R and -D options cannot be used at the same time)" << endl;
     cout << "" << endl;
 
     exit(EXIT_FAILURE);
@@ -33,12 +36,12 @@ int main(int argc, char **argv){
 
   //Read input arguments
   Int_t Qflag=0, fflag=0, binflag=0;
-  Int_t Dflag=0;
+  Int_t Dflag=0, Rflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "";
   Int_t nBins;
 
-  while ((c = getopt (argc, argv, "n:f:Q:D")) != -1) {
+  while ((c = getopt (argc, argv, "n:f:Q:DR")) != -1) {
     switch (c) {
     case 'n':
       binflag = 1;
@@ -54,6 +57,9 @@ int main(int argc, char **argv){
       break;
     case 'D':
       Dflag = 1;
+      break;
+    case 'R':
+      Rflag = 1;
       break;
     case '?':
       if (optopt == 'n')
@@ -103,9 +109,17 @@ int main(int argc, char **argv){
   }
   cout << "" << endl;
 
-  if(Dflag){
+  if(Rflag && Dflag){
+	  cout << "-R and -D options cannot be used at the same time!" << endl;
+	  exit(EXIT_FAILURE);
+  }
+  else if(Dflag){
     cout << "Debug mode ====> Only 10000 events considered in tree" << endl;
   }
+  else if(Rflag){
+    cout << "Reduced mode ====> Only 100000 events considered in tree" << endl;
+  }
+
 
   //Internal variables and binning
   Double_t M_proton = 0.938272;
@@ -165,7 +179,10 @@ int main(int argc, char **argv){
   T1->SetBranchAddress("Mmumu", &Mmumu);
 
 
-  Int_t tree_entries = (!Dflag) ? T1->GetEntries() : 10000;
+  Int_t tree_entries;
+  if (Dflag) tree_entries = 10000;
+  else if (Rflag) tree_entries = 100000;
+  else tree_entries = T1->GetEntries();
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
   Bool_t first = true;
