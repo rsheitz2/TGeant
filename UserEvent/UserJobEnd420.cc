@@ -22,15 +22,14 @@ void UserJobEnd420()
   //if(ph.print) cout<<"[ UserJobEnd420 has been called ]"<<endl;
   cout<<"[ UserJobEnd420 has been called ]"<<endl;
   
-  const Int_t nCuts = 15;//Should be the same as maxCuts in dy_variables.h
+  const Int_t nCuts = 13;//Should be the same as maxCuts in dy_variables.h
   TString cutNames[nCuts] = {"All_Di-particles", "CommonVX",
 			     "HasCommonPrimaryVertex","Opposite_Q",
 			     //"Opposite_Q", "XX0>30", "HighMass","ZfirstZlast",
 			     "DimuonTrig", "XX0>30", "HighMass",
-			     "tr1Zfirst", "tr1Zlast", "tr2Zfirst", "tr2Zlast",
-			     "TrackT_defined", "TrackT_within5",
-			     //"TracksX/ndf<10", "BeamDecay", "Trigger Val"};
-			     "TracksX/ndf<10", "Trigger Val"};
+			     //"tr1Zfirst", "tr1Zlast", "tr2Zfirst", "tr2Zlast",
+			     "ZfirstZlast", "TrackT_defined", "TrackT_within5",
+			     "TracksX/ndf<10", "Trigger Val", "ImageCut"};
 
   ph.h_file->cd();
   TDirectory* dir = (TDirectory*)gROOT->FindObject("UserEvent420");

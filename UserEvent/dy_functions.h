@@ -9,8 +9,8 @@
 inline Bool_t Hit(const PaDetect& det, const PaTPar& p){
   PaTPar extrapolated;
   
-  //Bool_t reached = p.Extrapolate(det.Z(), extrapolated, true); //True = Multiple scattering is used! (should be used)
-  Bool_t reached = p.Extrapolate(det.Z(), extrapolated, false); //False = Multiple scattering NOT used!
+  Bool_t reached = p.Extrapolate(det.Z(), extrapolated, true); //True = Multiple scattering is used! (should be used)
+  //Bool_t reached = p.Extrapolate(det.Z(), extrapolated, false); //False = Multiple scattering NOT used!
   if (reached && det.InActive(extrapolated.X(), extrapolated.Y()) ) return true;
 
   return false;
@@ -50,7 +50,7 @@ inline Bool_t pointsToLAS(const PaTPar& p){
   const PaDetect& H2_1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HG02Y1__") );
   const PaDetect& H2_2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HG02Y2__") );
 
-  return Hit(H1, p) && (Hit(H2_1, p) || Hit(H2_2, p) );
+  return (Hit(H1, p) && Hit(H2_1, p) ) || (Hit(H1, p) && Hit(H2_2, p) );//second
 }
 
 inline Bool_t pointsToLAS(const PaTrack& p){
@@ -58,64 +58,46 @@ inline Bool_t pointsToLAS(const PaTrack& p){
   const PaDetect& H2_1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HG02Y1__") );
   const PaDetect& H2_2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HG02Y2__") );
 
-  //return Hit(H1, p) && (Hit(H2_1, p) || Hit(H2_2, p) );//first
-  return (Hit(H1, p) && Hit(H2_1, p) ) || (Hit(H1, p) && Hit(H2_2, p) );//second
-  //return Hit(H1, H2_2, H2_1, p);//third
+  return (Hit(H1, p) && Hit(H2_1, p) ) || (Hit(H1, p) && Hit(H2_2, p) );
 }
 
 inline Bool_t pointsToOuter(const PaTPar& p){
-  const PaDetect& HO03Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO03Y1") );
-  const PaDetect& HO04Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y1") );
-  const PaDetect& HO04Y2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y2") );
-  
-  return Hit(HO03Y1, p) && (Hit(HO04Y1, p) || Hit(HO04Y2, p) );
-}
-
-inline Bool_t pointsToOuter(const PaTrack& p){
-  //const PaDetect& HO03Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO03Y1") );//First
-  //const PaDetect& HO04Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y1") );
-  //const PaDetect& HO04Y2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y2") );
-
-  const PaDetect& HO03Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO03Y1_m") );//second
+  const PaDetect& HO03Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO03Y1_m") );
   const PaDetect& HO04Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y1_m") );
   const PaDetect& HO04Y2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y2_m") );
   
-  //return Hit(HO03Y1, p) && (Hit(HO04Y1, p) || Hit(HO04Y2, p) );//first
   return (Hit(HO03Y1, p) && Hit(HO04Y1, p) ) || (Hit(HO03Y1, p) && Hit(HO04Y2, p) );//second
-  //return Hit(HO03Y1, HO04Y1, HO04Y2, p);//third
+}
+
+inline Bool_t pointsToOuter(const PaTrack& p){
+  const PaDetect& HO03Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO03Y1_m") );
+  const PaDetect& HO04Y1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y1_m") );
+  const PaDetect& HO04Y2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HO04Y2_m") );
+  
+  return (Hit(HO03Y1, p) && Hit(HO04Y1, p) ) || (Hit(HO03Y1, p) && Hit(HO04Y2, p) );
 }
 
 inline Bool_t pointsToMiddle(const PaTPar& p){
-  //const PaDetect& HM04Y = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM04Y1") );
-  //const PaDetect& HM05Y = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM05Y1") );
-
   const PaDetect& HM04Y_1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM04Y1_u") );
   const PaDetect& HM04Y_2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM04Y1_d") );
   const PaDetect& HM05Y_1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM05Y1_u") );
   const PaDetect& HM05Y_2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM05Y1_d") );
 
-  //return Hit(HM04Y, p) && Hit(HM05Y, p);
   return (Hit(HM04Y_1, p) || Hit(HM04Y_2, p) ) && (Hit(HM05Y_1, p) || Hit(HM05Y_2, p) );
 }
 
 inline Bool_t pointsToMiddle(const PaTrack& p){
-  //const PaDetect& HM04Y = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM04Y1") );
-  //const PaDetect& HM05Y = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM05Y1") );
-
   const PaDetect& HM04Y_1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM04Y1_u") );
   const PaDetect& HM04Y_2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM04Y1_d") );
   const PaDetect& HM05Y_1 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM05Y1_u") );
   const PaDetect& HM05Y_2 = PaSetup::Ref().Detector(PaSetup::Ref().iDetFirst("HM05Y1_d") );
   
-  //return Hit(HM04Y, p) && Hit(HM05Y, p);
   return (Hit(HM04Y_1, p) || Hit(HM04Y_2, p) ) && (Hit(HM05Y_1, p) || Hit(HM05Y_2, p) );
 }
 
-//inline void common2parVx(vector<Int_t>& vec, Int_t* vx_p1, Int_t size_p1, Int_t* vx_p2, Int_t size_p2){//common2parVx 
 inline void common2parVx(vector<Int_t>& vec, Int_t* vx_p1, Int_t size_p1, Int_t* vx_p2, Int_t size_p2){//common2parVx
   for (Int_t i=0; i<size_p1; i++){//p1
     for (Int_t j=0; j<size_p2; j++){//p2
-      //cout << "p1vx: " << vx_p1[i]  << "  vx_p2: " << vx_p2[j] << "  i: " << i  << "  j: " << j << endl;
       if (vx_p1[i] == vx_p2[j] ) vec.push_back(vx_p1[i] );
     }//p2
   }//p1/
@@ -124,7 +106,6 @@ inline void common2parVx(vector<Int_t>& vec, Int_t* vx_p1, Int_t size_p1, Int_t*
 inline void common2parVx(vector<Int_t>& vec, Int_t* vx_p1, Int_t size_p1, Int_t* vx_p2, Int_t size_p2, PaEvent& e){//common2parVx 
   for (Int_t i=0; i<size_p1; i++){//p1
     for (Int_t j=0; j<size_p2; j++){//p2
-      //if (vx_p1[i] == vx_p2[j] ) vec.push_back(vx_p1[i] );
       if (vx_p1[i] == vx_p2[j] ) {
 	vec.push_back(vx_p1[i] );
 	const PaVertex& test_vx_1 = e.vVertex(vx_p1[i]);
@@ -194,15 +175,6 @@ inline Int_t IsTrigValidation(Int_t trigMask, PaTPar& traj_p1, PaTPar& traj_p2){
       if (pointsToOuter(traj_p2) ) trigValidation = 1;
     }
   }
-  //Last Middle trigger
-  /*if (trigMask & 1){//Last_Middle
-    if (pointsToMiddle(traj_p1) ){
-    if (pointsToLAS(traj_p2)) trigValidation = 1;
-    }
-    else if (pointsToLAS(traj_p1) ){
-    if (pointsToMiddle(traj_p2) ) trigValidation = 1;
-    }
-    }//*/
 
   return trigValidation;
 }
@@ -213,6 +185,7 @@ inline Int_t IsImageCut(PaTPar traj_p1, PaTPar traj_p2, Int_t trigMask){
 
   return IsTrigValidation(trigMask, traj_p1, traj_p2);
 }
+
 
 inline void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target,
 				  TLorentzVector& spin1, TLorentzVector& spin2, 
@@ -265,5 +238,45 @@ inline void align_wrt_beam_photon(TLorentzVector& beam, TLorentzVector& target,
   lepton2.SetZ(lepton2_3.Dot(khat) );
 
 }//align_wrt_beam_photon//*/
+
+
+inline Bool_t ImageCut(PaTPar traj_p1, PaTPar traj_p2, Int_t trig){
+
+  traj_p1(5) = -traj_p1(5);
+  traj_p2(5) = -traj_p2(5);
+
+  if ( ((trig >> 8) & 1)//Last_Last
+       && pointsToLAS(traj_p1) && pointsToLAS(traj_p2)) return true;
+  else if ( (trig >> 2) & 1){//Last_Outer
+    if (pointsToOuter(traj_p1) ){
+      if (pointsToLAS(traj_p2)) return true;
+    }
+    if (pointsToLAS(traj_p1) ){
+      if (pointsToOuter(traj_p2) ) return true;
+    }
+  }
+
+  return false;
+}
+
+
+inline Bool_t ImageCut(PaTrack tr_p1, PaTrack tr_p2, Int_t trig){
+
+  //tr_p1.vTPar(0)(5) = -1.0*tr_p1.vTPar(0)(5);
+  //tr_p2.vTPar(0)(5) = -1.0*tr_p2.vTPar(0)(5);
+
+  if ( ((trig >> 8) & 1)//Last_Last
+       && pointsToLAS(tr_p1) && pointsToLAS(tr_p2)) return true;
+  else if ( (trig >> 2) & 1){//Last_Outer
+    if (pointsToOuter(tr_p1) ){
+      if (pointsToLAS(tr_p2)) return true;
+    }
+    if (pointsToLAS(tr_p1) ){
+      if (pointsToOuter(tr_p2) ) return true;
+    }
+  }
+
+  return false;
+}
 
 #endif

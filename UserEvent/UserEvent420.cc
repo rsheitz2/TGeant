@@ -13,8 +13,8 @@
 ////Testing to determine the correct cuts
 ///////////////////////////////////////////////
 
-//const static Int_t maxCuts = 15;//Should be the same as nCuts in UserJobEnd420.cc
-//const static Int_t nCutHist = 12;
+//const static Int_t maxCuts = 13;//Should be the same as nCuts in UserJobEnd420.cc
+//const static Int_t nCutHist = 13;
 //const static Int_t n2D_cutHist = 3;
 
 void UserEvent420(PaEvent& e){
@@ -48,6 +48,11 @@ void UserEvent420(PaEvent& e){
   
   static TH1D *hCuts[nCutHist+2][maxCuts];
   static TH2D *h2DCuts[n2D_cutHist][maxCuts];
+
+  //Cuts
+  static Bool_t cutCommonVx=true, BPV=true, oppositeQ=true, cutTrigMask=true;
+  static Bool_t cutXXO=true, cutMass=true, cutZfirstZlast=true,timeDefined=true;
+  static Bool_t timeIn5ns=true, trackChi2=true, cutTrigVal=true, cutImage=true;
 
   static bool first(true);
   if (first){
@@ -91,6 +96,22 @@ void UserEvent420(PaEvent& e){
       cout << " " << endl;
       exit(EXIT_FAILURE);
     }
+
+    cout << " " << endl;
+    cout << "Cut Setup!!!!!!!!!" << endl;
+    cout << "Common vertex            =   " << cutCommonVx << endl;
+    cout << "Best primary vertex      =   " << BPV <<  endl;
+    cout << "Opposite charge          =   " << oppositeQ << endl;
+    cout << "Trigger mask             =   " << cutTrigMask << endl;
+    cout << "XX0                      =   " << cutXXO << endl;
+    cout << "Mass cut                 =   " << cutMass << endl;
+    cout << "Zfirst and Zlast         =   " << cutZfirstZlast << endl;
+    cout << "Track times defined      =   " << timeDefined << endl;
+    cout << "Track times within 5ns   =   " << timeIn5ns << endl;
+    cout << "Track Chi2               =   " << trackChi2 << endl;
+    cout << "Trigger validation       =   " << cutTrigVal << endl;
+    cout << "Image cut                =   " << cutImage << endl;
+    cout << " " << endl;
     
     //////Making Trees////
     Particles = new TTree("Particles", "Particles");
@@ -183,7 +204,7 @@ void UserEvent420(PaEvent& e){
       vector<Int_t> common_vx;
       common2parVx(common_vx, vx_p1, p1_tmp.NVertex(), vx_p2,p2_tmp.NVertex() );
 
-      if (common_vx.size() == 0) continue; //Has common vertex
+      if (cutCommonVx && (common_vx.size()==0) ) continue; //Has common vertex
       for (vector<Int_t>::iterator ic=common_vx.begin(); ic!=common_vx.end();
 	   ic++) {
 	if(e.vVertex(*ic).IsPrimary() ) h1[21]->Fill(cut_bin-1 ); 
@@ -215,14 +236,14 @@ void UserEvent420(PaEvent& e){
 	}//vertex loop
       }//Does not have BPV taged
 	      
-      if (best_iVx == -1) continue;//Vertex is best primary
+      if (BPV && (best_iVx==-1) ) continue;//Vertex is best primary
       const PaVertex& vertex = e.vVertex(best_iVx);
 
       //Best primary vertex
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       hCut_VxZ[icut]->Fill(vertex.Z() ); icut++;
 
-      if (p1_tmp.Q() == p2_tmp.Q() ) continue;//Opposite signs
+      if (oppositeQ && (p1_tmp.Q()==p2_tmp.Q()) ) continue;//Opposite signs
       //p1 for positive muon, p2 or negative muon
       const PaParticle &p1 = (p1_tmp.Q() > 0) ?
 	e.vParticle(i_p1) : e.vParticle(i_p2);
@@ -230,8 +251,19 @@ void UserEvent420(PaEvent& e){
 	e.vParticle(i_p2) : e.vParticle(i_p1);
       const PaTrack& tr1 = e.vTrack(p1.iTrack() );
       const PaTrack& tr2 = e.vTrack(p2.iTrack() );
+      
       const PaTPar& traj_p1 = p1.ParInVtx(best_iVx);
       const PaTPar& traj_p2 = p2.ParInVtx(best_iVx);
+      
+      const PaTPar& traj_p1_tr = tr1.vTPar(0);
+      const PaTPar& traj_p2_tr = tr2.vTPar(0);
+      const PaTPar& traj_p1_tr_opp = PaTPar(traj_p1_tr(0),traj_p1_tr(1),
+					    traj_p1_tr(2),traj_p1_tr(3),
+					    traj_p1_tr(4),-traj_p1_tr(5));
+      const PaTPar& traj_p2_tr_opp = PaTPar(traj_p2_tr(0),traj_p2_tr(1),
+					    traj_p2_tr(2),traj_p2_tr(3),
+					    traj_p2_tr(4),-traj_p2_tr(5));
+      
       const PaParticle& pIn = e.vParticle(vertex.InParticle() );
       const PaTPar& traj_pIn = pIn.ParInVtx(best_iVx);
       const PaTrack& trIn = e.vTrack(pIn.iTrack() );
@@ -293,19 +325,20 @@ void UserEvent420(PaEvent& e){
 
 
       //Dimuon trigger fired
-      if ( !((e.TrigMask() >> 2) & 1) && !((e.TrigMask() >> 8) & 1) ) continue;
-      if ( (e.TrigMask() & 1) ) continue;//veto middle
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
-      if (inNH3) {
-	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
-	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      if (cutTrigMask){
+	if ( !((e.TrigMask() >> 2) & 1) && !((e.TrigMask() >> 8) & 1) ) continue;
+	if ( (e.TrigMask() & 1) ) continue;//veto middle
+	h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
+	Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
+	if (inNH3) {
+	  hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
+	  hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+	}
+	FillCuts(hCuts, cut_variables, icut); icut++;
       }
-      FillCuts(hCuts, cut_variables, icut); icut++;
-      
                   
       //XX0 > 30
-      if (tr1.XX0() < 30.0 || tr2.XX0() < 30.0) continue;
+      if (cutXXO && (tr1.XX0()<30.0 || tr2.XX0()<30.0) ) continue;
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
@@ -320,64 +353,36 @@ void UserEvent420(PaEvent& e){
       else if (lv_diMu.M() > 4.3 && lv_diMu.M() <= 8.5) i_mHist = 33;
       else i_mHist = 34;
 
-      if (isHighMass && i_mHist != 33) continue;//Mass [4.3, 8.5]
-      else if (isJPsiMass && i_mHist != 32) continue;//Mass [4.3, 8.5]
-      else if (isnoMassCut){}
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
-      if (inNH3) {
-	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
-	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      if (cutMass){
+	if (isHighMass && i_mHist != 33) continue;//Mass [4.3, 8.5]
+	else if (isJPsiMass && i_mHist != 32) continue;//Mass [4.3, 8.5]
+	else if (isnoMassCut && lv_diMu.M() <2.0) continue;
+	h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
+	Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
+	if (inNH3) {
+	  hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
+	  hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+	}
+	FillCuts(hCuts, cut_variables, icut); icut++;
       }
-      FillCuts(hCuts, cut_variables, icut); icut++;
             
       //Zfirst/Zlast
-      if (tr1.ZFirst() > 300) continue;
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
-      if (inNH3) {
-	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
-	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
-      }
-      FillCuts(hCuts, cut_variables, icut); icut++;
-      
-      if (tr1.ZLast() < 1500) continue;
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      if (inNH3) {
-	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
-	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
-      }
-      Fill2D_Cuts(h2DCuts, cut2D_variables, icut); 
-      FillCuts(hCuts, cut_variables, icut); icut++;
-            
-      if (tr2.ZFirst() > 300) continue;
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
-      if (inNH3) {
-	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
-	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
-      }
-      FillCuts(hCuts, cut_variables, icut); icut++;
-      
-      if (tr2.ZLast() < 1500) continue;
-      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-      Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
-      if (inNH3) {
-	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
-	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
-      }
-      FillCuts(hCuts, cut_variables, icut); icut++;
-            
-      /*if (tr1.ZFirst() > 300 || tr1.ZLast() < 1500) continue;
+      if (cutZfirstZlast){
+	if (tr1.ZFirst() > 300) continue;
+	if (tr1.ZLast() < 1500) continue;
+	if (tr2.ZFirst() > 300) continue;
+	if (tr2.ZLast() < 1500) continue;
 	h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-	hCut_VxZ[icut]->Fill(vertex.Z() ); icut++;
-	if (tr2.ZFirst() > 300 || tr2.ZLast() < 1500) continue;
-	h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
-	Fill2D_Cuts(h2DCuts, cut2D_variables, icut); 
-	hCut_VxZ[icut]->Fill(vertex.Z() ); icut++;*/
-
+	Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
+	if (inNH3) {
+	  hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
+	  hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+	}
+	FillCuts(hCuts, cut_variables, icut); icut++;
+      }
+            
       //Track time defined
-      if (tr1.MeanTime() == 1e+10 || tr2.MeanTime() == 1e+10) continue;
+      if (timeDefined && (tr1.MeanTime()==1e+10 || tr2.MeanTime()==1e+10) ) continue;
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
@@ -387,7 +392,7 @@ void UserEvent420(PaEvent& e){
       FillCuts(hCuts, cut_variables, icut); icut++;
       
       //Track times with 5ns
-      if (TMath::Abs(tr1.MeanTime() - tr2.MeanTime() ) > 5) continue;
+      if (timeIn5ns && (TMath::Abs(tr1.MeanTime() - tr2.MeanTime() )>5) ) continue;
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
@@ -397,8 +402,8 @@ void UserEvent420(PaEvent& e){
       FillCuts(hCuts, cut_variables, icut); icut++;
 
       //Tracks Chi/ndf < 10
-      if (tr1.Chi2tot()/tr1.Ndf() > 10) continue;
-      if (tr2.Chi2tot()/tr2.Ndf() > 10) continue;
+      if (trackChi2 && tr1.Chi2tot()/tr1.Ndf() > 10) continue;
+      if (trackChi2 && tr2.Chi2tot()/tr2.Ndf() > 10) continue;
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
@@ -429,7 +434,7 @@ void UserEvent420(PaEvent& e){
 	}
       }
       
-      if (!trigValidation) continue;
+      if (cutTrigVal && !trigValidation) continue;
       h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
       Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
       if (inNH3) {
@@ -437,7 +442,30 @@ void UserEvent420(PaEvent& e){
 	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
       }
       FillCuts(hCuts, cut_variables, icut); icut++;
+
+      //Image Cut (for combinatorial Bg)
+      Bool_t imageValidation = false;
+      if ( ((e.TrigMask() >> 8) & 1)//Last_Last
+	   && pointsToLAS(traj_p1_tr_opp)
+	   && pointsToLAS(traj_p2_tr_opp)) imageValidation = true;
+      else if ( (e.TrigMask() >> 2) & 1){//Last_Outer
+	if (pointsToOuter(traj_p1_tr_opp) ){
+	  if (pointsToLAS(traj_p2_tr_opp)) imageValidation = true;
+	}
+        if (pointsToLAS(traj_p1_tr_opp) ){
+	  if (pointsToOuter(traj_p2_tr_opp) ) imageValidation = true;
+	}
+      }
       
+      if (cutImage && !imageValidation) continue;
+      h1[21]->Fill(cut_bin-1); cut_bin += cut_space;
+      Fill2D_Cuts(h2DCuts, cut2D_variables, icut);
+      if (inNH3) {
+	hCut_PhiS[icut]->Fill(lv_Spin_TF.Phi() );
+	hCut_PhiS_simple[icut]->Fill(lv_Spin_simple_TF.Phi() );
+      }
+      FillCuts(hCuts, cut_variables, icut); icut++;
+
       //TLorentzVector lv_pIn = traj_pIn.LzVec(M_pi);
 
       ///////Numerating values for tree
