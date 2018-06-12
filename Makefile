@@ -1,6 +1,5 @@
 CC=g++
-CFLAGS=`root-config --cflags --libs` -Wall -std=c++11 -Wfatal-errors
-#CFLAGS=`root-config --cflags --libs`
+CFLAGS=`root-config --cflags --libs` -Wall -std=c++11 -Wfatal-errors -Wpedantic 
 INC_PATH=-Isrc 
 
 SRC = src

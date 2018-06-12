@@ -29,7 +29,7 @@ int main(int argc, char **argv){
     cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"<<endl;
     cout << "Option:  -M (\"HM\", \"JPsi\", \"AMDY\") to specify which mass ";
     cout << "range to use for \"binning information\" " << endl;
-    cout << "   (default mass range is high mass)" << endl;
+    cout << "   (default mass range is AMDY)" << endl;
     cout << "" << endl;
 	cout << "---Additional Cut Options---" << endl;
     cout << "Option:  -i minMass (to specify a minimum mass cut)";
@@ -55,7 +55,7 @@ int main(int argc, char **argv){
   TString massRange="";
   Double_t M_min=0.0, M_max=16.0;
 
-  while ((c = getopt (argc, argv, "wM:b:u:f:Q:P:")) != -1) {
+  while ((c = getopt (argc, argv, "wM:b:u:f:Q:P:i:a:")) != -1) {
     switch (c) {
     case 'u':
       uflag = 1;
@@ -82,12 +82,12 @@ int main(int argc, char **argv){
       break;
     case 'i':
       iflag = 1;
-	  M_min = stof(optarg);
-      break;
+			M_min = stof(optarg);
+			break;
     case 'a':
       aflag = 1;
-	  M_max = stof(optarg);
-      break;
+			M_max = stof(optarg);
+			break;
     case 'M':
       Mflag = 1;
 	  massRange += optarg;
@@ -165,9 +165,9 @@ int main(int argc, char **argv){
   vxZ_upstream_bounds.push_back(-294.5);
   vxZ_downstream_bounds.push_back(-219.5);
 
-  if (!Mflag || massRange=="HM") M_bounds.push_back(4.3);//High mass
+  if (!Mflag || massRange=="AMDY")M_bounds.push_back(2.0);//All Mass DY
   else if (massRange=="JPsi")M_bounds.push_back(2.5);//JPsi mass
-  else if (massRange=="AMDY")M_bounds.push_back(0.0);//All Mass DY
+	else if (massRange=="HM") M_bounds.push_back(4.3);//High mass
   else {
     cout << "Invalid mass range specified" << endl;
     exit(EXIT_FAILURE);
@@ -303,12 +303,12 @@ int main(int argc, char **argv){
     exit(EXIT_FAILURE);
   }
 
-  if (!Mflag || massRange=="HM") M_bounds.push_back(8.5);//High mass
+  if (!Mflag || massRange=="AMDY")M_bounds.push_back(16.0);//All Mass DY
+	else if (massRange=="HM") M_bounds.push_back(8.5);//High mass
   else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
-  else if (massRange=="AMDY")M_bounds.push_back(16.0);//All Mass DY
   cout << " " << endl;
   cout << "Mass range set to:" << endl;
-  (!Mflag) ? cout << "HM" << endl : cout << massRange << endl;
+  (!Mflag) ? cout << "AMDY" << endl : cout << massRange << endl;
   cout << " " << endl;
 
   if (M_bounds.at(0) > M_bounds.at(1) || M_bounds.back() < M_xval.front() ){
@@ -882,16 +882,29 @@ int main(int argc, char **argv){
 		  cout << "    Mass range " << M_min << " - " << M_max << endl;
 	  }
       cout << " " << endl;
+			//cout << "additional charge cut add" << endl;
 
       first = false;
     }
 
 	//Additional cuts
 	if ( (vDiMuon_invM < M_min) || (vDiMuon_invM > M_max) ) continue;
+	//if ( qP_traj1>0 && qP_traj2>0 ) continue;//no Positive charges
+	//if ( qP_traj1<0 && qP_traj2<0 ) continue;//no Negative charges
+	//if ( (qP_traj1<0&&qP_traj2>0)|| (qP_traj1>0&&qP_traj2<0) ) continue;//no OppositeQ 
 
     //Perform Cuts
     // {{{
     //Setup Vectors in different coordinate systems
+    Bool_t inNH3 = false;
+    if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
+      Spin[0] = -1.0*avgUpStream/(TMath::Abs(avgUpStream) );
+			inNH3 = true;
+		}
+    else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
+      Spin[0] = -1.0*avgDownStream/(TMath::Abs(avgDownStream) );
+			inNH3 = true;
+		}
     //Compass frame:
     TLorentzVector lv_beam(beam_X, beam_Y, beam_Z, beam_E);
     TLorentzVector lv_target(0, 0, 0, M_proton);
@@ -923,9 +936,6 @@ int main(int argc, char **argv){
 					       lv_p2_Mu.X(), lv_p2_Mu.Y(),
 					       lv_beam.X(), lv_beam.Y()};
 
-    Bool_t inNH3 = ( (vx_z>-294.5 && vx_z<-239.3) ||
-		     (vx_z>-219.5 && vx_z<-164.3) ) ? true : false;
-    
     Int_t icut = 0;
     FillCutsReal(hImpactCuts, cut_variables, icut, nCutHist);
     Fill2D_CutsReal(h2D_ImpactCuts, cut2D_variables, icut, n2D_cutHist); 
@@ -1004,7 +1014,7 @@ int main(int argc, char **argv){
     Double_t radius = TMath::Sqrt(vx_x*vx_x+vx_y*vx_y);
 
     if (vx_z >= -294.5 && vx_z <= -239.3){//Up stream NH3
-      Spin[0] = -1.0*avgUpStream/(TMath::Abs(avgUpStream) );
+      //Spin[0] = -1.0*avgUpStream/(TMath::Abs(avgUpStream) );
       Spin[1] = avgUpStream;
       Spin[2] = upStreamCoil1;
       Spin[3] = upStreamCoil2;
@@ -1132,7 +1142,7 @@ int main(int argc, char **argv){
       }
     }//Up stream
     else if (vx_z >= -219.5 && vx_z <= -164.3){//Down stream NH3
-      Spin[0] = -1.0*avgDownStream/(TMath::Abs(avgDownStream) );
+      //Spin[0] = -1.0*avgDownStream/(TMath::Abs(avgDownStream) );
       Spin[1] = avgDownStream;
       Spin[2] = downStreamCoil6;
       Spin[3] = downStreamCoil7;
@@ -1307,7 +1317,7 @@ int main(int argc, char **argv){
     BinAvg(AvgPol_pT, AvgPol_pT_count, q_transverse, pT_bounds, pol);
     BinAvg(AvgPol_M, AvgPol_M_count, vDiMuon_invM, M_bounds, pol);
     BinAvg(AvgPol_rad, AvgPol_rad_count, radius, rad_bounds, pol);
-    
+
     tree->Fill();
   }//tree entries
 
