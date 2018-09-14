@@ -36,6 +36,10 @@ int main(int argc, char **argv){
 	cout << "          (default value is 0.0)" << endl;
     cout << "Option:  -a maxMass (to specify a maximum mass cut)";
 	cout << "          (default value is 16.0)" << endl;
+    cout << "Option:  -c whichCharge (to specify only a specific charge)";
+	cout << "          (\"posOnly\", \"negOnly\", \"oppOnly\" " << 
+		" allowed options for which charges to consider)" << endl;
+	cout << "          (used for combinatorial BG studies)" << endl;
 	cout << "" << endl;
 	cout << "---Additional Options---" << endl;
     cout << "Option:  -u ##		(new UserEvent number, default==420)"
@@ -49,13 +53,13 @@ int main(int argc, char **argv){
   ///////////////
   // {{{
   Int_t uflag=0, wflag=0, Qflag=0, fflag=0, Pflag=0, binFlag=0, iflag=0, aflag=0;
-  Int_t Mflag=0;
+  Int_t Mflag=0, cflag=0;
   Int_t c;
   TString userNum = "", fname = "", outFile = "", period = "", binFile = "";
-  TString massRange="";
+  TString massRange="", whichCharge="";
   Double_t M_min=0.0, M_max=16.0;
 
-  while ((c = getopt (argc, argv, "wM:b:u:f:Q:P:i:a:")) != -1) {
+  while ((c = getopt (argc, argv, "wM:b:u:f:Q:P:i:a:c:")) != -1) {
     switch (c) {
     case 'u':
       uflag = 1;
@@ -90,8 +94,12 @@ int main(int argc, char **argv){
 			break;
     case 'M':
       Mflag = 1;
-	  massRange += optarg;
-      break;
+			massRange += optarg;
+			break;
+    case 'c':
+      cflag = 1;
+			whichCharge += optarg;
+			break;
     case '?':
       if (optopt == 'u')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -165,7 +173,7 @@ int main(int argc, char **argv){
   vxZ_upstream_bounds.push_back(-294.5);
   vxZ_downstream_bounds.push_back(-219.5);
 
-  if (!Mflag || massRange=="AMDY")M_bounds.push_back(2.0);//All Mass DY
+  if (!Mflag || massRange=="AMDY")M_bounds.push_back(1.0);//All Mass DY
   else if (massRange=="JPsi")M_bounds.push_back(2.5);//JPsi mass
 	else if (massRange=="HM") M_bounds.push_back(4.3);//High mass
   else {
@@ -335,6 +343,14 @@ int main(int argc, char **argv){
     cout << "Bad spills file did not open" << endl;
     exit(EXIT_FAILURE);    
   }
+
+	if (cflag){
+		if (whichCharge!="posOnly" && whichCharge!="negOnly" && whichCharge!="oppOnly"){
+			cout << "Wrong -c option   " << whichCharge << endl;
+			cout << "Allowed options: \"posOnly\", \"negOnly\" or \"oppOnly\"" <<endl;
+			exit(EXIT_FAILURE);
+		}
+	}
   // }}}
 
   //Internal variables and binning
@@ -791,6 +807,9 @@ int main(int argc, char **argv){
   Double_t PhiS, PhiS_simple, Phi_CS, Theta_CS, rapidity;
   Int_t targetPosition;
   Double_t Spin[7];
+	tree->Branch("RunNum", &RunNum, "RunNum/L");
+	tree->Branch("SpillNum", &SpillNum, "SpillNum/L");
+	tree->Branch("event", &event, "event/L");
   tree->Branch("PhiS", &PhiS, "PhiS/D");
   tree->Branch("PhiS_simple", &PhiS_simple, "PhiS_simple/D");
   tree->Branch("Phi_CS", &Phi_CS, "Phi_CS/D");
@@ -854,12 +873,12 @@ int main(int argc, char **argv){
 
   //Cuts (Turn on/off)
   // {{{
-  Bool_t badSpillCut=true, physKinematics=true, qTcut=true, dilCut=true;
+  Bool_t badSpillCut=true, physKinematics=true, qTcut=true, dilCut=false;
   Bool_t vxZ_NH3=true, rad_NH3=true;
   // }}}
 
   Int_t tree_entries = T1->GetEntries();
-  //Int_t tree_entries = 1000;//Debug
+  //tree_entries = 1000;//Debug
   cout << "Entries in tree = " << T1->GetEntries() << endl;
   cout << "Entries considered = " << tree_entries << endl;
   Bool_t first = true;
@@ -881,17 +900,31 @@ int main(int argc, char **argv){
 		  cout << "Additional Mass cut" << endl;
 		  cout << "    Mass range " << M_min << " - " << M_max << endl;
 	  }
+	  if (cflag) {
+		  cout << "Additional charge cut" << endl;
+		  cout << "    charges to consider " << whichCharge << endl;
+	  }
       cout << " " << endl;
-			//cout << "additional charge cut add" << endl;
 
       first = false;
     }
 
 	//Additional cuts
 	if ( (vDiMuon_invM < M_min) || (vDiMuon_invM > M_max) ) continue;
-	//if ( qP_traj1>0 && qP_traj2>0 ) continue;//no Positive charges
-	//if ( qP_traj1<0 && qP_traj2<0 ) continue;//no Negative charges
-	//if ( (qP_traj1<0&&qP_traj2>0)|| (qP_traj1>0&&qP_traj2<0) ) continue;//no OppositeQ 
+	if (cflag){
+		if (whichCharge=="posOnly"){
+			if ( qP_traj1<0 && qP_traj2<0 ) continue;//no Negative charges
+			if ( (qP_traj1<0&&qP_traj2>0)|| (qP_traj1>0&&qP_traj2<0) ) continue;//no OppositeQ 
+		}
+		else if (whichCharge=="negOnly"){
+			if ( qP_traj1>0 && qP_traj2>0 ) continue;//no Positive charges
+			if ( (qP_traj1<0&&qP_traj2>0)|| (qP_traj1>0&&qP_traj2<0) ) continue;//no OppositeQ 
+		}
+		else if (whichCharge=="oppOnly"){
+			if ( qP_traj1>0 && qP_traj2>0 ) continue;//no Positive charges
+			if ( qP_traj1<0 && qP_traj2<0 ) continue;//no Negative charges
+		}
+	}
 
     //Perform Cuts
     // {{{
@@ -1304,7 +1337,7 @@ int main(int argc, char **argv){
     //Average
     AvgPolarization += TMath::Abs(Polarization);
     AvgPolarization_count++;
-    if(Polarization == 0.0 || dilutionFactor == 0.0){
+    if(dilCut && (Polarization == 0.0 || dilutionFactor == 0.0)){
       cout << "Problems with Polarization or dilution value" << endl;
       cout << "Polarization = " << Polarization << endl;
       cout << "Dilution = " << dilutionFactor << endl;

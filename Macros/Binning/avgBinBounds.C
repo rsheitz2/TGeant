@@ -31,6 +31,10 @@ int main(int argc, char **argv){
     cout << "          (default value is 0.0)" << endl;
     cout << "Option:  -a maxMass (to specify a maximum mass cut)";
     cout << "          (default value is 16.0)" << endl;
+    cout << "Option:  -c whichCharge (to specify only a specific charge)";
+	cout << "          (\"posOnly\", \"negOnly\", \"oppOnly\" " << 
+		" allowed options for which charges to consider)" << endl;
+	cout << "          (used for combinatorial BG studies)" << endl;
     cout << "" << endl;
     cout << "---Additional Options---" << endl;
     cout << "Option:  -u ##		(new UserEvent number, default==420)" << endl;
@@ -44,13 +48,13 @@ int main(int argc, char **argv){
 
   //Read input arguments
   Int_t uflag=0, Qflag=0,fflag=0, Pflag=0, binflag=0, iflag=0, aflag=0;
-  Int_t Dflag=0;
+  Int_t Dflag=0, cflag=0;
   Int_t c;
-  TString userNum = "", fname = "", outFile = "", period = "";
+  TString userNum = "", fname = "", outFile = "", period = "", whichCharge="";
   Double_t M_min = 0.0, M_max=16.0;
   Int_t nBins;
 
-  while ((c = getopt (argc, argv, "n:u:f:Q:P:i:a:D")) != -1) {
+  while ((c = getopt (argc, argv, "n:u:f:Q:P:i:a:Dc:")) != -1) {
     switch (c) {
     case 'n':
       binflag = 1;
@@ -83,6 +87,10 @@ int main(int argc, char **argv){
     case 'D':
       Dflag = 1;
       break;
+    case 'c':
+      cflag = 1;
+			whichCharge += optarg;
+			break;
     case '?':
       if (optopt == 'u')
 	fprintf (stderr, "Option -%c requires an argument.\n", optopt);
@@ -427,12 +435,30 @@ int main(int argc, char **argv){
 	cout << "Additional Mass cut" << endl;
 	cout << "    Mass range " << M_min << " - " << M_max << endl;
       }
+	  if (cflag) {
+		  cout << "Additional charge cut" << endl;
+		  cout << "    charges to consider " << whichCharge << endl;
+	  }
 
       first = false;
     }
 
     //Additional cuts
     if ( (vDiMuon_invM < M_min) || (vDiMuon_invM > M_max) ) continue;
+	if (cflag){
+		if (whichCharge=="posOnly"){
+			if ( qP_traj1<0 && qP_traj2<0 ) continue;//no Negative charges
+			if ( (qP_traj1<0&&qP_traj2>0)|| (qP_traj1>0&&qP_traj2<0) ) continue;//no OppositeQ 
+		}
+		else if (whichCharge=="negOnly"){
+			if ( qP_traj1>0 && qP_traj2>0 ) continue;//no Positive charges
+			if ( (qP_traj1<0&&qP_traj2>0)|| (qP_traj1>0&&qP_traj2<0) ) continue;//no OppositeQ 
+		}
+		else if (whichCharge=="oppOnly"){
+			if ( qP_traj1>0 && qP_traj2>0 ) continue;//no Positive charges
+			if ( qP_traj1<0 && qP_traj2<0 ) continue;//no Negative charges
+		}
+	}
 
     //Cuts
     cut_bin = 1;
