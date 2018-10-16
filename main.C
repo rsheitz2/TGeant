@@ -14,23 +14,25 @@ int main(int argc, char **argv){
     cout << "./main [options] [-ffilename]" << endl;
     cout << "filename should be the full path name" << endl;
     cout << "" << endl;
-    cout << "Option:  -u ##		(new UserEvent number, default==420)"
-	 << endl;
+		cout << "\n---Write Options---" << endl;
     cout << "Option:  -w		(write output to file)" << endl;
     cout << "        default output file is named \"Output.root\"" << endl;
     cout << "Option:  -Q outName	(write output to file to outName)"
 	 << endl;
+		cout << "\n---Binning Options---" << endl;
     cout << "Option:  -b textfile with binning information	";
     cout << "(textfile should be made from Macro/Binning/avgBinBounds.C)"
 	 << endl;
     cout << "Option:  -M (\"HM\", \"JPsi\", \"AMDY\") to specify which mass range to use";
     cout << "     (Option to be used with -b for specifying mass bins)";
-    cout << "\n   (default mass range is high mass)" << endl;
-    cout << "---Additional Cut Options---" << endl;
+    cout << "\n   (default mass range is AMDY)" << endl;
+    cout << "\n---Additional Cut Options---" << endl;
     cout << "Option:  -i minMass (to specify a minimum mass cut)";
     cout << "          (default value is 0.0)" << endl;
     cout << "Option:  -a maxMass (to specify a maximum mass cut)";
     cout << "          (default value is 16.0)" << endl;
+    cout << "\n---Additional Options---" << endl;
+    cout << "Option:  -u ##		(new UserEvent number, default==420)\n";
     cout << "" << endl;
     cout << "" << endl;
 
@@ -139,9 +141,9 @@ int main(int argc, char **argv){
     xF_bounds.push_back(-1.0);
     pT_bounds.push_back(0.4);
 
-    if (!Mflag || massRange=="HM") M_bounds.push_back(4.3);//High mass
+    if (!Mflag || massRange=="AMDY")M_bounds.push_back(0.0);//All Mass DY
+		else if (massRange=="HM") M_bounds.push_back(4.3);//High mass
     else if (massRange=="JPsi")M_bounds.push_back(2.5);//JPsi mass
-    else if (massRange=="AMDY")M_bounds.push_back(0.0);//All Mass DY
     else {
       cout << "Invalid mass range specified" << endl;
       exit(EXIT_FAILURE);
@@ -263,9 +265,9 @@ int main(int argc, char **argv){
     vxZ_upstream_bounds.push_back(-239.3);
     vxZ_downstream_bounds.push_back(-164.3);
 
-    if (!Mflag || massRange=="HM") M_bounds.push_back(8.5);//High mass
+    if (!Mflag || massRange=="AMDY")M_bounds.push_back(16.0);//All Mass DY
+		else if (massRange=="HM") M_bounds.push_back(8.5);//High mass
     else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
-    else if (massRange=="AMDY")M_bounds.push_back(16.0);//All Mass DY
     cout << " " << endl;
     cout << "Mass range set to:" << endl;
     (!Mflag) ? cout << "HM" << endl : cout << massRange << endl;
@@ -1031,7 +1033,7 @@ int main(int argc, char **argv){
   // {{{
   if (!wflag && !Qflag) cout << "No file output" << endl;
   else{ 
-    if (wflag) outFile += "RealData.root";
+    if (wflag) outFile += "main.root";
     TFile *myFile = new TFile(outFile, "RECREATE");
     hCuts->Write();
     tree->Write();
