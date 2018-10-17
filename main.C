@@ -270,7 +270,7 @@ int main(int argc, char **argv){
     else if (massRange=="JPsi")M_bounds.push_back(4.3);//JPsi mass
     cout << " " << endl;
     cout << "Mass range set to:" << endl;
-    (!Mflag) ? cout << "HM" << endl : cout << massRange << endl;
+    (!Mflag) ? cout << "AMDY" << endl : cout << massRange << endl;
     cout << " " << endl;
 
     if(xN_xval.size()==0 || xPi_xval.size()==0 || xF_xval.size()==0 ||
